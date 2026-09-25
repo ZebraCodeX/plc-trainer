@@ -544,47 +544,53 @@ function BranchView({
           const branches = item.branches ?? [];
           const anyActive = branches.some((b) => analysis?.activeBranches.has(b.id));
           return (
-            <div className="parallel" key={item.id}>
-              <div className={`branch-bar ${anyActive ? 'hot' : ''}`} />
-              <div className="branch-stack">
-                {branches.map((sub, i) => {
-                  const active = analysis?.activeBranches.has(sub.id);
-                  return (
-                    <div className={`branch-row ${active ? 'active' : ''}`} key={sub.id}>
-                      <BranchView
-                        branch={sub}
-                        analysis={analysis}
-                        bitState={bitState}
-                        selection={selection}
-                        onSelect={onSelect}
-                        onAddItem={onAddItem}
-                        onAddGroup={onAddGroup}
-                        onAddBranch={onAddBranch}
-                        onRemoveBranch={onRemoveBranch}
-                        onDropOp={onDropOp}
-                        rungId={rungId}
-                      />
-                      {branches.length > 1 && (
-                        <button
-                          className="branch-del"
-                          title="Remove branch"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveBranch(sub.id);
-                          }}
-                        >
-                          ×
-                        </button>
-                      )}
-                      <span className="branch-node" data-first={i === 0} data-last={i === branches.length - 1} />
-                    </div>
-                  );
-                })}
-                <button className="add-branch" onClick={() => onAddBranch(item.id)}>
-                  + branch
-                </button>
+            <div className="parallel-wrap" key={item.id}>
+              <div className="parallel">
+                <div className={`branch-bar ${anyActive ? 'hot' : ''}`} />
+                <div className="branch-stack">
+                  {branches.map((sub, i) => {
+                    const active = analysis?.activeBranches.has(sub.id);
+                    return (
+                      <div className={`branch-row ${active ? 'active' : ''}`} key={sub.id}>
+                        <BranchView
+                          branch={sub}
+                          analysis={analysis}
+                          bitState={bitState}
+                          selection={selection}
+                          onSelect={onSelect}
+                          onAddItem={onAddItem}
+                          onAddGroup={onAddGroup}
+                          onAddBranch={onAddBranch}
+                          onRemoveBranch={onRemoveBranch}
+                          onDropOp={onDropOp}
+                          rungId={rungId}
+                        />
+                        {branches.length > 1 && (
+                          <button
+                            className="branch-del"
+                            title="Remove branch"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRemoveBranch(sub.id);
+                            }}
+                          >
+                            ×
+                          </button>
+                        )}
+                        <span
+                          className="branch-node"
+                          data-first={i === 0}
+                          data-last={i === branches.length - 1}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className={`branch-bar ${anyActive ? 'hot' : ''}`} />
               </div>
-              <div className={`branch-bar ${anyActive ? 'hot' : ''}`} />
+              <button className="add-branch" onClick={() => onAddBranch(item.id)}>
+                + branch
+              </button>
             </div>
           );
         }

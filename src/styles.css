@@ -458,6 +458,13 @@ td.mono,
   box-shadow: 0 0 0 1px var(--accent);
 }
 
+.parallel-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: center;
+}
+
 .parallel {
   display: flex;
   align-items: stretch;
@@ -469,6 +476,7 @@ td.mono,
   width: 2px;
   background: #93a4b8;
   flex: none;
+  align-self: stretch;
 }
 
 .parallel .branch-bar.hot {
@@ -479,6 +487,8 @@ td.mono,
 .parallel .branch-stack {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
   gap: 0;
   padding: 2px 0;
   position: relative;
@@ -527,7 +537,7 @@ td.mono,
 
 .add-branch {
   align-self: flex-start;
-  margin: 2px 0 2px 4px;
+  margin: 2px 0 0 6px;
   padding: 1px 8px;
   font-size: 10px;
   background: #1b2634;
@@ -536,19 +546,6 @@ td.mono,
 }
 
 .add-branch:hover {
-  color: var(--accent);
-}
-
-.branch-btn {
-  margin-left: 4px;
-  padding: 3px 8px;
-  font-size: 12px;
-  background: #1b2634;
-  border-color: #34465a;
-  color: var(--muted);
-}
-
-.branch-btn:hover {
   color: var(--accent);
 }
 
