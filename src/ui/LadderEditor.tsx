@@ -286,17 +286,19 @@ export function LadderEditor() {
       </div>
 
       <div className="ladder-palette-bar">
-        <Palette
+        <PaletteMenu
           title="Conditions"
           instructions={INPUT_INSTS}
           pending={pendingOp}
           onPick={setPendingOp}
+          onClose={() => setPendingOp(null)}
         />
-        <Palette
+        <PaletteMenu
           title="Outputs"
           instructions={OUTPUT_INSTS}
           pending={pendingOp}
           onPick={setPendingOp}
+          onClose={() => setPendingOp(null)}
         />
       </div>
 
@@ -439,51 +441,83 @@ function DropSlot({
   );
 }
 
-function Palette({
+function PaletteMenu({
   title,
   instructions,
   pending,
   onPick,
+  onClose,
 }: {
   title: string;
   instructions: InstructionDef[];
   pending: string | null;
   onPick: (op: string) => void;
+  onClose: () => void;
 }) {
+  const [open, setOpen] = useState(false);
   const categories = [...new Set(instructions.map((i) => i.category))];
+
   return (
-    <div className="palette-panel">
-      <span className="palette-title">{title}</span>
-      <div className="rung-palette">
-        {categories.map((cat, ci) => (
-          <div key={cat} className="palette-group-inline">
-            {ci > 0 && <span className="palette-sep" />}
-            <span
-              className="palette-cat-inline"
-              style={{ color: CATEGORY_COLORS[cat] }}
-              title={categoryLabelOf(cat)}
-            >
-              <span className="palette-dot" style={{ background: CATEGORY_COLORS[cat] }} />
-              {categoryLabelOf(cat)}
-            </span>
-            {instructions
-              .filter((i) => i.category === cat)
-              .map((i) => (
-                <button
-                  key={i.mnemonic}
-                  className={`rung-chip ${pending === i.mnemonic ? 'picked' : ''}`}
-                  style={{ ['--op-color' as string]: instructionColor(i.mnemonic) }}
-                  draggable
-                  title={`${i.mnemonic} — ${i.name}: ${i.help}`}
-                  onDragStart={(e) => e.dataTransfer.setData('text/op', i.mnemonic)}
-                  onClick={() => onPick(i.mnemonic)}
+    <div className="palette-menu">
+      <button
+        className={`palette-menu-btn ${open ? 'open' : ''} ${pending ? 'armed' : ''}`}
+        onClick={() => setOpen((o) => !o)}
+        title={`${title} menu`}
+      >
+        {title}
+        <span className="caret">▾</span>
+      </button>
+      {open && (
+        <>
+          <div className="palette-scrim" onClick={() => setOpen(false)} />
+          <div className="palette-dropdown">
+            {categories.map((cat) => (
+              <div key={cat} className="palette-row">
+                <span
+                  className="palette-cat-inline"
+                  style={{ color: CATEGORY_COLORS[cat] }}
+                  title={categoryLabelOf(cat)}
                 >
-                  <LadderSymbol op={i.mnemonic} />
-                </button>
-              ))}
+                  <span className="palette-dot" style={{ background: CATEGORY_COLORS[cat] }} />
+                  {categoryLabelOf(cat)}
+                </span>
+                <div className="palette-row-items">
+                  {instructions
+                    .filter((i) => i.category === cat)
+                    .map((i) => (
+                      <button
+                        key={i.mnemonic}
+                        className={`rung-chip ${pending === i.mnemonic ? 'picked' : ''}`}
+                        style={{ ['--op-color' as string]: instructionColor(i.mnemonic) }}
+                        draggable
+                        title={`${i.mnemonic} — ${i.name}: ${i.help}`}
+                        onDragStart={(e) => e.dataTransfer.setData('text/op', i.mnemonic)}
+                        onClick={() => {
+                          onPick(i.mnemonic);
+                          setOpen(false);
+                        }}
+                      >
+                        <LadderSymbol op={i.mnemonic} />
+                      </button>
+                    ))}
+                </div>
+              </div>
+            ))}
+            <div className="palette-dropdown-foot">
+              <span className="muted small">Click or drag an instruction onto a rung slot</span>
+              <button
+                className="small"
+                onClick={() => {
+                  onClose();
+                  setOpen(false);
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   );
 }

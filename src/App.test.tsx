@@ -117,4 +117,18 @@ describe('App shell', () => {
     expect(screen.getAllByText('PLCommando').length).toBeGreaterThan(0);
     expect(screen.getByText('The Runaway Motor')).toBeTruthy();
   });
+
+  it('opens the ladder palette dropdowns', async () => {
+    await registerUser('pal', 'pw12', 'Pal');
+    await signInThroughUi('pal', 'pw12');
+    fireEvent.click(screen.getByRole('button', { name: 'Ladder Logic' }));
+
+    fireEvent.click(screen.getByRole('button', { name: /Conditions/ }));
+    expect(screen.getByText('Bit & Contacts')).toBeTruthy();
+    expect(screen.getByText('Compare')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /Outputs/ }));
+    expect(screen.getByText('Timers')).toBeTruthy();
+    expect(screen.getByText('Move')).toBeTruthy();
+  });
 });

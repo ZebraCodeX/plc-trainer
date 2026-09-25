@@ -265,11 +265,11 @@ export function App() {
               title={running ? 'Stop the PLC' : 'Run the PLC'}
             >
               <Icon name={running ? 'stop' : 'play'} size={15} />
-              {running ? 'Stop' : 'Run'}
+              <span>{running ? 'Stop' : 'Run'}</span>
             </button>
             <button className="btn-reset" onClick={() => engine.reset()} title="Reset tags and timers">
               <Icon name="reset" size={15} />
-              Reset
+              <span>Reset</span>
             </button>
             <label className="scan-field" title="Scan cycle time in milliseconds">
               <Icon name="gauge" size={14} />
@@ -334,6 +334,9 @@ export function App() {
       </div>
 
       {navOpen && <div className="nav-scrim" onClick={() => setNavOpen(false)} />}
+      {explorerOpen && !inArena && (
+        <div className="explorer-scrim" onClick={() => setExplorerOpen(false)} />
+      )}
 
       {ui.message && <div className="toast">{ui.message}</div>}
 
