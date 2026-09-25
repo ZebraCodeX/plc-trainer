@@ -17,7 +17,6 @@ import {
 import { INSTRUCTIONS, getInstruction, operandAccepts, type InstructionDef } from '../engine/instructions';
 import type { ConditionBranch, ConditionItem, Routine, Rung } from '../engine/model';
 import { uid } from '../engine/uid';
-import { makeRoutine } from '../engine/factory';
 import { TagInput } from './TagInput';
 import { LadderSymbol } from './LadderSymbol';
 import { Guide } from './Guide';
@@ -220,43 +219,14 @@ export function LadderEditor() {
     setSelection(null);
   }
 
-  function newRoutine(type: 'ladder' | 'st') {
-    const rt = makeRoutine(type === 'ladder' ? `Routine_${routines.length + 1}` : `ST_${routines.length + 1}`, type);
-    applyEdit((p) => {
-      p.programs[0].routines.push(rt);
-    }, 'content');
-    setUi({ selectedRoutineId: rt.id });
-  }
-
-  function renameRoutine(name: string) {
-    mutateRoutine(routine.id, (rt) => {
-      rt.name = name;
-    });
-  }
-
-  function deleteRoutine() {
-    if (routines.length <= 1) return;
-    applyEdit((p) => {
-      p.programs[0].routines = p.programs[0].routines.filter((r) => r.id !== routine.id);
-    }, 'content');
-    setUi({ selectedRoutineId: project.programs[0].routines[0]?.id ?? null });
-  }
-
   const selectedRung = selection ? routine.rungs.find((r) => r.id === selection.rungId) : undefined;
 
   if (routine.type !== 'ladder') {
     return (
       <div className="col">
-        <RoutineBar
-          routine={routine}
-          routines={routines}
-          onSelect={(id) => setUi({ selectedRoutineId: id })}
-          onNew={newRoutine}
-          onRename={renameRoutine}
-          onDelete={deleteRoutine}
-        />
         <div className="empty-state">
-          This is a Structured Text routine. Switch to the <b>Structured Text</b> tab to edit it.
+          <b>{routine.name}</b> is a Structured Text routine. Open the{' '}
+          <b>Structured Text</b> tab to edit it, or add routines from the Explorer.
         </div>
       </div>
     );
@@ -264,15 +234,6 @@ export function LadderEditor() {
 
   return (
     <div className="col">
-      <RoutineBar
-        routine={routine}
-        routines={routines}
-        onSelect={(id) => setUi({ selectedRoutineId: id })}
-        onNew={newRoutine}
-        onRename={renameRoutine}
-        onDelete={deleteRoutine}
-      />
-
       <Guide title="How ladder logic works">
         <ul className="bullets">
           <li>
@@ -324,65 +285,66 @@ export function LadderEditor() {
         {error && <span className="pill" style={{ color: 'var(--red)' }}>{error}</span>}
       </div>
 
-      <div className="ladder-layout">
-        <div className="col palette-col">
-          <Palette
-            title="Conditions (inputs)"
-            instructions={INPUT_INSTS}
-            pending={pendingOp}
-            onPick={setPendingOp}
-          />
-          <Palette
-            title="Outputs"
-            instructions={OUTPUT_INSTS}
-            pending={pendingOp}
-            onPick={setPendingOp}
-          />
-        </div>
+      <div className="ladder-palette-bar">
+        <Palette
+          title="Conditions"
+          instructions={INPUT_INSTS}
+          pending={pendingOp}
+          onPick={setPendingOp}
+        />
+        <Palette
+          title="Outputs"
+          instructions={OUTPUT_INSTS}
+          pending={pendingOp}
+          onPick={setPendingOp}
+        />
+      </div>
 
-        <div className="rungs">
-          <div className="rungs-head">
-            <span>Rung</span>
-            <span className="muted small">Logic</span>
-          </div>
-          {routine.rungs.length === 0 && (
-            <div className="empty-state">No rungs yet. Click “Rung” to start programming.</div>
-          )}
-          {routine.rungs.map((rung, index) => (
-            <div
-              key={rung.id}
-              className={`rung ${ui.selectedRungId === rung.id ? 'selected' : ''}`}
-              onClick={() => setUi({ selectedRungId: rung.id })}
-            >
-              <div className="rung-gutter">
-                <span className="rung-no">{index + 1}</span>
-                <button title="Move up" onClick={() => moveRung(rung.id, -1)}>
-                  <Icon name="arrowUp" size={13} />
-                </button>
-                <button title="Move down" onClick={() => moveRung(rung.id, 1)}>
-                  <Icon name="arrowDown" size={13} />
-                </button>
-                <button className="danger" title="Delete rung" onClick={() => deleteRung(rung.id)}>
-                  <Icon name="trash" size={13} />
-                </button>
-              </div>
-              <div className="rung-body">
-                <div className={`ladder-rail ${rungAnalyses.get(rung.id)?.power ? 'hot' : ''}`} />
-                <BranchView
-                  branch={rung.condition}
-                  analysis={rungAnalyses.get(rung.id)}
-                  bitState={bitState}
-                  selection={selection}
-                  onSelect={(s) => setSelection(s)}
-                  onAddItem={addConditionItem}
-                  onAddGroup={(branchId) => addGroup(rung.id, branchId)}
-                  onAddBranch={addBranch}
-                  onRemoveBranch={removeBranch}
-                  onDropOp={(op, branchId) => {
-                    if (op && getInstruction(op)?.kind === 'input') addConditionItem(branchId, op);
-                  }}
-                  rungId={rung.id}
-                />
+      <div className="ladder-layout">
+        <div className="ladder-frame">
+          <div className="ladder-side-rail left" />
+          <div className="rungs">
+            <div className="rungs-head">
+              <span>Rung</span>
+              <span className="muted small">Logic</span>
+            </div>
+            {routine.rungs.length === 0 && (
+              <div className="empty-state">No rungs yet. Click “Rung” to start programming.</div>
+            )}
+            {routine.rungs.map((rung, index) => (
+              <div
+                key={rung.id}
+                className={`rung ${ui.selectedRungId === rung.id ? 'selected' : ''}`}
+                onClick={() => setUi({ selectedRungId: rung.id })}
+              >
+                <div className="rung-gutter">
+                  <span className="rung-no">{index + 1}</span>
+                  <button title="Move up" onClick={() => moveRung(rung.id, -1)}>
+                    <Icon name="arrowUp" size={13} />
+                  </button>
+                  <button title="Move down" onClick={() => moveRung(rung.id, 1)}>
+                    <Icon name="arrowDown" size={13} />
+                  </button>
+                  <button className="danger" title="Delete rung" onClick={() => deleteRung(rung.id)}>
+                    <Icon name="trash" size={13} />
+                  </button>
+                </div>
+                <div className="rung-body">
+                  <BranchView
+                    branch={rung.condition}
+                    analysis={rungAnalyses.get(rung.id)}
+                    bitState={bitState}
+                    selection={selection}
+                    onSelect={(s) => setSelection(s)}
+                    onAddItem={addConditionItem}
+                    onAddGroup={(branchId) => addGroup(rung.id, branchId)}
+                    onAddBranch={addBranch}
+                    onRemoveBranch={removeBranch}
+                    onDropOp={(op, branchId) => {
+                      if (op && getInstruction(op)?.kind === 'input') addConditionItem(branchId, op);
+                    }}
+                    rungId={rung.id}
+                  />
                 <div className={`ladder-rail ${rungAnalyses.get(rung.id)?.power ? 'hot' : ''}`} />
                 <div className="output-zone">
                   {rung.outputs.map((out) => (
@@ -402,9 +364,11 @@ export function LadderEditor() {
                   />
                 </div>
                 <div className={`ladder-rail end ${rungAnalyses.get(rung.id)?.power ? 'hot' : ''}`} />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="ladder-side-rail right" />
         </div>
       </div>
 
@@ -488,34 +452,38 @@ function Palette({
 }) {
   const categories = [...new Set(instructions.map((i) => i.category))];
   return (
-    <div className="panel palette-panel">
-      <h3>{title}</h3>
-      {categories.map((cat) => (
-        <div key={cat} className="palette-section">
-          <div className="palette-cat" style={{ color: CATEGORY_COLORS[cat] }}>
-            <span className="palette-dot" style={{ background: CATEGORY_COLORS[cat] }} />
-            {categoryLabelOf(cat)}
-          </div>
-          <div className="palette-grid">
+    <div className="palette-panel">
+      <span className="palette-title">{title}</span>
+      <div className="rung-palette">
+        {categories.map((cat, ci) => (
+          <div key={cat} className="palette-group-inline">
+            {ci > 0 && <span className="palette-sep" />}
+            <span
+              className="palette-cat-inline"
+              style={{ color: CATEGORY_COLORS[cat] }}
+              title={categoryLabelOf(cat)}
+            >
+              <span className="palette-dot" style={{ background: CATEGORY_COLORS[cat] }} />
+              {categoryLabelOf(cat)}
+            </span>
             {instructions
               .filter((i) => i.category === cat)
               .map((i) => (
-                <div
+                <button
                   key={i.mnemonic}
-                  className={`chip ${pending === i.mnemonic ? 'picked' : ''}`}
+                  className={`rung-chip ${pending === i.mnemonic ? 'picked' : ''}`}
                   style={{ ['--op-color' as string]: instructionColor(i.mnemonic) }}
                   draggable
-                  title={`${i.name} — ${i.help}`}
+                  title={`${i.mnemonic} — ${i.name}: ${i.help}`}
                   onDragStart={(e) => e.dataTransfer.setData('text/op', i.mnemonic)}
                   onClick={() => onPick(i.mnemonic)}
                 >
-                  <span className="chip-code">{i.mnemonic}</span>
-                  <span className="chip-name">{i.name}</span>
-                </div>
+                  <LadderSymbol op={i.mnemonic} />
+                </button>
               ))}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -705,48 +673,6 @@ function OutputView({
         <span className="lad-op">{op}</span>
         <span className="lad-tag">{operandSummary(op, operands)}</span>
       </div>
-    </div>
-  );
-}
-
-function RoutineBar({
-  routine,
-  routines,
-  onSelect,
-  onNew,
-  onRename,
-  onDelete,
-}: {
-  routine: Routine;
-  routines: Routine[];
-  onSelect: (id: string) => void;
-  onNew: (type: 'ladder' | 'st') => void;
-  onRename: (name: string) => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="toolbar">
-      <h3 style={{ margin: 0 }}>Routines</h3>
-      {routines.map((r) => (
-        <button
-          key={r.id}
-          className={r.id === routine.id ? 'active' : ''}
-          onClick={() => onSelect(r.id)}
-        >
-          {r.name} <span className="badge">{r.type === 'st' ? 'ST' : 'LAD'}</span>
-        </button>
-      ))}
-      <button onClick={() => onNew('ladder')}>+ Ladder</button>
-      <button onClick={() => onNew('st')}>+ ST</button>
-      <input
-        value={routine.name}
-        onChange={(e) => onRename(e.target.value)}
-        style={{ width: 150 }}
-        title="Routine name"
-      />
-      <button className="danger" onClick={onDelete} disabled={routines.length <= 1}>
-        Delete routine
-      </button>
     </div>
   );
 }

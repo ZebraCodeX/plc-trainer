@@ -3,6 +3,15 @@ import { useStore } from '../../store/store';
 import { useEngine } from '../../store/hooks';
 import { buildExplorerTree, collectFolderIds, type ExplorerNode } from './model';
 import { Icon, TabIcon } from '../icons';
+import { makeRoutine } from '../../engine/factory';
+
+interface ContextMenu {
+  x: number;
+  y: number;
+  routineId: string;
+  name: string;
+  type: 'ladder' | 'st';
+}
 
 function FileIcon({ node }: { node: ExplorerNode }) {
   if (node.kind === 'folder') return null;
@@ -21,6 +30,7 @@ export function Explorer() {
   const engine = useEngine();
   const [open, setOpen] = useState<Set<string>>(new Set(['folder-program']));
   const [filter, setFilter] = useState('');
+  const [menu, setMenu] = useState<ContextMenu | null>(null);
 
   const stErrorCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -57,6 +67,56 @@ export function Explorer() {
     });
   }
 
+  function addRoutine(type: 'ladder' | 'st') {
+    const routine = makeRoutine(
+      type === 'st' ? `ST_${project.programs[0]?.routines.length ?? 1}` : `Routine_${project.programs[0]?.routines.length ?? 1}`,
+      type,
+    );
+    if (type === 'st') {
+      routine.stSource = `// Structured Text routine\n`;
+    }
+    applyEdit((p) => {
+      if (!p.programs[0]) return;
+      p.programs[0].routines.push(routine);
+    }, 'content');
+    setUi({ activeTab: type === 'st' ? 'st' : 'ladder', selectedRoutineId: routine.id });
+    setOpen((prev) => new Set(prev).add('folder-program').add(`folder-program-${project.programs[0]?.id}`));
+  }
+
+  function renameRoutine(id: string, name: string) {
+    applyEdit((p) => {
+      for (const program of p.programs) {
+        const r = program.routines.find((x) => x.id === id);
+        if (r) r.name = name;
+      }
+    }, 'content');
+  }
+
+  function convertRoutine(id: string) {
+    applyEdit((p) => {
+      for (const program of p.programs) {
+        const r = program.routines.find((x) => x.id === id);
+        if (r && r.type === 'ladder') {
+          r.type = 'st';
+          if (!r.stSource) r.stSource = `// Converted from ladder. Rewrite the rungs in ST.\n`;
+        }
+      }
+    }, 'content');
+  }
+
+  function deleteRoutine(id: string) {
+    const program = project.programs[0];
+    if (!program || program.routines.length <= 1) return;
+    applyEdit((p) => {
+      for (const prg of p.programs) {
+        prg.routines = prg.routines.filter((x) => x.id !== id);
+      }
+    }, 'content');
+    if (ui.selectedRoutineId === id) {
+      setUi({ selectedRoutineId: program.routines.find((r) => r.id !== id)?.id ?? null });
+    }
+  }
+
   function openFile(node: ExplorerNode) {
     if (node.kind !== 'file') return;
     if (node.routineId) setUi({ activeTab: node.tab, selectedRoutineId: node.routineId });
@@ -85,6 +145,20 @@ export function Explorer() {
             className={`tree-row ${isFolder ? 'folder' : 'file'} ${isActive(node) ? 'active' : ''}`}
             style={{ paddingLeft: 6 + depth * 14 }}
             onClick={() => (isFolder ? toggle(node.id) : openFile(node))}
+            onContextMenu={
+              !isFolder && node.routineId
+                ? (e) => {
+                    e.preventDefault();
+                    setMenu({
+                      x: e.clientX,
+                      y: e.clientY,
+                      routineId: node.routineId!,
+                      name: node.name,
+                      type: node.type === 'st' ? 'st' : 'ladder',
+                    });
+                  }
+                : undefined
+            }
             title={node.name}
           >
             {isFolder ? (
@@ -139,29 +213,69 @@ export function Explorer() {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
-        <button
-          className="icon-btn tiny"
-          title="New ladder routine"
-          onClick={() => {
-            applyEdit((p) => {
-              const program = p.programs[0];
-              if (!program) return;
-              const id = `rtn_${Date.now().toString(36)}`;
-              program.routines.push({
-                id,
-                name: `Routine_${program.routines.length + 1}`,
-                type: 'ladder',
-                rungs: [],
-                stSource: '',
-              });
-            }, 'content');
-          }}
-        >
+        <button className="icon-btn tiny" title="New ladder routine" onClick={() => addRoutine('ladder')}>
           <Icon name="plus" size={14} />
+        </button>
+        <button className="icon-btn tiny" title="New Structured Text routine" onClick={() => addRoutine('st')}>
+          <span className="mono" style={{ fontSize: 11, fontWeight: 700 }}>
+            ST
+          </span>
         </button>
       </div>
 
       <div className="explorer-tree">{renderNodes(tree, 0)}</div>
+
+      <div className="explorer-hint muted small">
+        Right-click a routine to rename, convert or delete it.
+      </div>
+
+      {menu && (
+        <>
+          <div
+            className="menu-scrim"
+            onClick={() => setMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setMenu(null);
+            }}
+          />
+          <div className="context-menu" style={{ top: menu.y, left: menu.x }}>
+            <div className="context-head mono">{menu.name}</div>
+            <button
+              className="menu-item"
+              onClick={() => {
+                const name = prompt('Rename routine', menu.name);
+                if (name && name.trim()) renameRoutine(menu.routineId, name.trim());
+                setMenu(null);
+              }}
+            >
+              <Icon name="book" size={15} /> Rename
+            </button>
+            {menu.type === 'ladder' && (
+              <button
+                className="menu-item"
+                onClick={() => {
+                  convertRoutine(menu.routineId);
+                  setUi({ activeTab: 'st', selectedRoutineId: menu.routineId });
+                  setMenu(null);
+                }}
+              >
+                <Icon name="reset" size={15} /> Convert to Structured Text
+              </button>
+            )}
+            <button
+              className="menu-item danger"
+              disabled={project.programs[0]?.routines.length <= 1}
+              onClick={() => {
+                deleteRoutine(menu.routineId);
+                setMenu(null);
+              }}
+            >
+              <Icon name="trash" size={15} /> Delete routine
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
