@@ -2,6 +2,7 @@ import { useStore } from '../store/store';
 import { demoProject } from '../engine/factory';
 import { Guide } from './Guide';
 import { LadderSymbol } from './LadderSymbol';
+import { instructionColor, CATEGORY_COLORS } from '../ladder/colors';
 
 const APP_MAP: { tab: string; what: string }[] = [
   { tab: 'Ladder Logic', what: 'Draw relay-style logic: contacts, coils, timers, counters, compare and math. Watch power flow light up live.' },
@@ -24,6 +25,17 @@ const ABBREVIATIONS: { code: string; meaning: string }[] = [
   { code: 'CTU', meaning: 'Count Up — counter that increments on each pulse' },
   { code: 'MOV', meaning: 'Move — copy a value from source to destination' },
 ];
+
+const LEGEND_LABELS: Record<string, string> = {
+  bit: 'Bit / Contacts & Coils',
+  timer: 'Timers',
+  counter: 'Counters',
+  compare: 'Compare',
+  math: 'Math',
+  move: 'Move',
+  logical: 'Bitwise Logic',
+  program: 'Program Control',
+};
 
 export function HomeView({ onNewProject }: { onNewProject: () => void }) {
   const { project, applyEdit, loadProject, setUi } = useStore();
@@ -159,7 +171,7 @@ export function HomeView({ onNewProject }: { onNewProject: () => void }) {
             <tbody>
               {ABBREVIATIONS.map((a) => (
                 <tr key={a.code}>
-                  <td className="mono" style={{ width: 60, color: 'var(--accent)', fontWeight: 700 }}>
+                  <td className="mono" style={{ width: 60, color: instructionColor(a.code), fontWeight: 700 }}>
                     {a.code}
                   </td>
                   <td className="muted small">{a.meaning}</td>
@@ -172,6 +184,29 @@ export function HomeView({ onNewProject }: { onNewProject: () => void }) {
           </p>
         </div>
       </div>
+
+      <Guide title="The colour code used in the logic" defaultOpen>
+        <p className="muted">
+          Instructions are colour-coded by category so you can read a rung at a glance — the same
+          colour appears in the palette and on the rung.
+        </p>
+        <div className="legend">
+          {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
+            <span className="legend-item" key={cat}>
+              <span className="legend-swatch" style={{ background: color }} />
+              {LEGEND_LABELS[cat] ?? cat}
+            </span>
+          ))}
+          <span className="legend-item">
+            <span className="legend-swatch" style={{ background: 'var(--green)' }} />
+            Energized (power flowing)
+          </span>
+          <span className="legend-item">
+            <span className="legend-swatch" style={{ background: 'var(--amber)' }} />
+            Live value
+          </span>
+        </div>
+      </Guide>
 
       <div className="panel">
         <h3>Project</h3>

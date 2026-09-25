@@ -21,6 +21,8 @@ import { makeRoutine } from '../engine/factory';
 import { TagInput } from './TagInput';
 import { LadderSymbol } from './LadderSymbol';
 import { Guide } from './Guide';
+import { Icon } from './icons';
+import { instructionColor, CATEGORY_COLORS } from '../ladder/colors';
 import type { Tag } from '../engine/types';
 
 interface Selection {
@@ -299,8 +301,8 @@ export function LadderEditor() {
       </Guide>
 
       <div className="ladder-toolbar">
-        <button onClick={addRung} className="primary">
-          + Rung
+        <button onClick={addRung} className="btn-add-rung">
+          <Icon name="plus" size={15} /> Rung
         </button>
         <label className="pill">
           <input
@@ -311,10 +313,10 @@ export function LadderEditor() {
           Live power flow
         </label>
         <span className="muted small">
-          Click a palette instruction, then click a <b>+</b> slot. Or drag the chip onto a slot.
+          Pick an instruction, then click a <b>+</b> slot — or drag it onto a slot.
         </span>
         {pendingOp && (
-          <span className="pill" style={{ borderColor: 'var(--accent)' }}>
+          <span className="pill placing">
             Placing <b className="mono">{pendingOp}</b>{' '}
             <button onClick={() => setPendingOp(null)}>cancel</button>
           </span>
@@ -322,8 +324,8 @@ export function LadderEditor() {
         {error && <span className="pill" style={{ color: 'var(--red)' }}>{error}</span>}
       </div>
 
-      <div className="grid2" style={{ gridTemplateColumns: '240px 1fr', alignItems: 'start' }}>
-        <div className="col">
+      <div className="ladder-layout">
+        <div className="col palette-col">
           <Palette
             title="Conditions (inputs)"
             instructions={INPUT_INSTS}
@@ -339,8 +341,12 @@ export function LadderEditor() {
         </div>
 
         <div className="rungs">
+          <div className="rungs-head">
+            <span>Rung</span>
+            <span className="muted small">Logic</span>
+          </div>
           {routine.rungs.length === 0 && (
-            <div className="empty-state">No rungs yet. Click “+ Rung” to start programming.</div>
+            <div className="empty-state">No rungs yet. Click “Rung” to start programming.</div>
           )}
           {routine.rungs.map((rung, index) => (
             <div
@@ -349,15 +355,15 @@ export function LadderEditor() {
               onClick={() => setUi({ selectedRungId: rung.id })}
             >
               <div className="rung-gutter">
-                <div>{index + 1}</div>
+                <span className="rung-no">{index + 1}</span>
                 <button title="Move up" onClick={() => moveRung(rung.id, -1)}>
-                  ↑
+                  <Icon name="arrowUp" size={13} />
                 </button>
                 <button title="Move down" onClick={() => moveRung(rung.id, 1)}>
-                  ↓
+                  <Icon name="arrowDown" size={13} />
                 </button>
                 <button className="danger" title="Delete rung" onClick={() => deleteRung(rung.id)}>
-                  ✕
+                  <Icon name="trash" size={13} />
                 </button>
               </div>
               <div className="rung-body">
@@ -482,27 +488,29 @@ function Palette({
 }) {
   const categories = [...new Set(instructions.map((i) => i.category))];
   return (
-    <div className="panel">
+    <div className="panel palette-panel">
       <h3>{title}</h3>
       {categories.map((cat) => (
-        <div key={cat} style={{ marginBottom: 8 }}>
-          <div className="muted small" style={{ textTransform: 'uppercase', marginBottom: 4 }}>
-            {cat}
+        <div key={cat} className="palette-section">
+          <div className="palette-cat" style={{ color: CATEGORY_COLORS[cat] }}>
+            <span className="palette-dot" style={{ background: CATEGORY_COLORS[cat] }} />
+            {categoryLabelOf(cat)}
           </div>
-          <div className="palette" style={{ border: 'none', padding: 0, margin: 0 }}>
+          <div className="palette-grid">
             {instructions
               .filter((i) => i.category === cat)
               .map((i) => (
                 <div
                   key={i.mnemonic}
-                  className="chip"
-                  style={pending === i.mnemonic ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : undefined}
+                  className={`chip ${pending === i.mnemonic ? 'picked' : ''}`}
+                  style={{ ['--op-color' as string]: instructionColor(i.mnemonic) }}
                   draggable
-                  title={i.name}
+                  title={`${i.name} — ${i.help}`}
                   onDragStart={(e) => e.dataTransfer.setData('text/op', i.mnemonic)}
                   onClick={() => onPick(i.mnemonic)}
                 >
-                  {i.mnemonic}
+                  <span className="chip-code">{i.mnemonic}</span>
+                  <span className="chip-name">{i.name}</span>
                 </div>
               ))}
           </div>
@@ -510,6 +518,20 @@ function Palette({
       ))}
     </div>
   );
+}
+
+function categoryLabelOf(cat: string): string {
+  const labels: Record<string, string> = {
+    bit: 'Bit & Contacts',
+    timer: 'Timers',
+    counter: 'Counters',
+    compare: 'Compare',
+    math: 'Math',
+    move: 'Move',
+    logical: 'Bitwise Logic',
+    program: 'Program Control',
+  };
+  return labels[cat] ?? cat;
 }
 
 function BranchView({
@@ -644,7 +666,11 @@ function LadderItem({
   return (
     <div className="lad-cell" onClick={(e) => { e.stopPropagation(); onClick(); }}>
       <div className={`lad-wire ${hotIn ? 'hot' : ''}`} />
-      <div className={`lad-item ${hotOut ? 'energized' : ''} ${selected ? 'selected' : ''}`} title={title}>
+      <div
+        className={`lad-item ${hotOut ? 'energized' : ''} ${selected ? 'selected' : ''}`}
+        style={{ ['--op-color' as string]: instructionColor(op) }}
+        title={title}
+      >
         <LadderSymbol op={op} hot={hotOut} bit={bit} />
         <span className="lad-op">{op}</span>
         <span className="lad-tag">{operandSummary(op, operands)}</span>
@@ -672,6 +698,7 @@ function OutputView({
       <div className={`lad-wire ${hot ? 'hot' : ''}`} />
       <div
         className={`lad-item ${hot ? 'energized' : ''} ${selected ? 'selected' : ''}`}
+        style={{ ['--op-color' as string]: instructionColor(op) }}
         title={`${op} — ${def?.name ?? ''}: ${def?.help ?? ''}`}
       >
         <LadderSymbol op={op} hot={hot} />

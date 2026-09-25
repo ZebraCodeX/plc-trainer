@@ -1,5 +1,6 @@
 import { INSTRUCTIONS, type InstructionCategory } from '../engine/instructions';
 import { LadderSymbol } from './LadderSymbol';
+import { instructionColor, CATEGORY_COLORS } from '../ladder/colors';
 
 const CATEGORY_LABELS: Record<InstructionCategory, string> = {
   bit: 'Bit / Contacts & Coils',
@@ -28,7 +29,13 @@ export function InstructionReference({ compact = false }: { compact?: boolean })
     <div className="col">
       {ORDER.map((cat) => (
         <div key={cat} className="panel">
-          <h3>{CATEGORY_LABELS[cat]}</h3>
+          <h3>
+            <span
+              className="palette-dot"
+              style={{ background: CATEGORY_COLORS[cat], marginRight: 2 }}
+            />
+            {CATEGORY_LABELS[cat]}
+          </h3>
           <table>
             <thead>
               <tr>
@@ -45,7 +52,7 @@ export function InstructionReference({ compact = false }: { compact?: boolean })
                   <td>
                     <LadderSymbol op={i.mnemonic} />
                   </td>
-                  <td className="mono" style={{ fontWeight: 700, color: 'var(--accent)' }}>
+                  <td className="mono" style={{ fontWeight: 700, color: instructionColor(i.mnemonic) }}>
                     {i.mnemonic}
                   </td>
                   <td>{i.name}</td>

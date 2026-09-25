@@ -4,6 +4,8 @@ A browser-based PLC and industrial automation training simulator. Program in **L
 
 ## Features
 
+- **File explorer** — a VS Code–style sidebar tree of your programs, routines, hardware, data and screens; click any item to open it.
+- **Accounts** — sign in / out with local accounts (stored only in your browser).
 - **Ladder Logic editor** — drag-and-drop rungs, contacts, coils, timers, counters, math/compare instructions, nested parallel branches, live power-flow animation and online value monitoring.
 - **Structured Text editor** — CodeMirror-based editor with syntax highlighting, tag autocomplete, `IF/CASE/FOR/WHILE`, and the same instruction set as ladder.
 - **PLC runtime** — tag database (BOOL/SINT/INT/DINT/REAL/TIMER/COUNTER, arrays, controller/program scope), configurable scan time, subroutines (JSR).
@@ -19,6 +21,10 @@ A browser-based PLC and industrial automation training simulator. Program in **L
 npm install
 npm run dev      # open http://localhost:5173
 ```
+
+On first run, sign in with the seeded account `instructor` / `plc123`, then
+create your own account from the login screen. Accounts, passwords (PBKDF2-hashed)
+and projects are kept in your browser only — nothing is uploaded.
 
 ## Scripts
 
