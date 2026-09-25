@@ -57,6 +57,23 @@ export function findGroup(branch: ConditionBranch, id: string): ConditionItem | 
   return null;
 }
 
+/** Find the group that directly contains the given branch id. */
+export function findGroupContainingBranch(
+  branch: ConditionBranch,
+  branchId: string,
+): ConditionItem | null {
+  for (const item of branch.items) {
+    if (item.type === 'group') {
+      if ((item.branches ?? []).some((b) => b.id === branchId)) return item;
+      for (const b of item.branches ?? []) {
+        const found = findGroupContainingBranch(b, branchId);
+        if (found) return found;
+      }
+    }
+  }
+  return null;
+}
+
 export function removeConditionItem(branch: ConditionBranch, id: string): boolean {
   const idx = branch.items.findIndex((i) => i.id === id);
   if (idx >= 0) {

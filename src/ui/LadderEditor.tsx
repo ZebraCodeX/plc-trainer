@@ -6,6 +6,7 @@ import {
   addBranchToGroup,
   findBranchOf,
   findGroup,
+  findGroupContainingBranch,
   findItem,
   makeConditionItem,
   makeEmptyBranch,
@@ -67,6 +68,25 @@ export function LadderEditor() {
     for (const rung of routine.rungs) map.set(rung.id, analyzeRung(ctx, rung));
     return map;
   }, [routine, engine, program, ui.monitor, project, scan]);
+
+  const bitState = useMemo(() => {
+    const map = new Map<string, boolean>();
+    if (!routine || routine.type !== 'ladder') return map;
+    for (const rung of routine.rungs) {
+      const walk = (branch: ConditionBranch) => {
+        for (const item of branch.items) {
+          if (item.type === 'instruction') {
+            const a = item.operands?.[0] ?? '';
+            if (a && !/^[-+]?\d/.test(a)) map.set(item.id, engine.db.readScalar(a) === true);
+          } else {
+            for (const b of item.branches ?? []) walk(b);
+          }
+        }
+      };
+      walk(rung.condition);
+    }
+    return map;
+  }, [routine, engine, project, scan]);
 
   if (!program || !routine) {
     return <div className="empty-state">No program found. Create one from the Training tab.</div>;
@@ -166,6 +186,18 @@ export function LadderEditor() {
       for (const rung of rt.rungs) {
         if (findGroup(rung.condition, groupId)) {
           addBranchToGroup(rung.condition, groupId);
+          return;
+        }
+      }
+    });
+  }
+
+  function removeBranch(branchId: string) {
+    mutateRoutine(routine.id, (rt) => {
+      for (const rung of rt.rungs) {
+        const group = findGroupContainingBranch(rung.condition, branchId);
+        if (group && group.branches) {
+          group.branches = group.branches.filter((b) => b.id !== branchId);
           return;
         }
       }
@@ -329,20 +361,23 @@ export function LadderEditor() {
                 </button>
               </div>
               <div className="rung-body">
-                <Rail hot={rungAnalyses.get(rung.id)?.power ?? false} />
+                <div className={`ladder-rail ${rungAnalyses.get(rung.id)?.power ? 'hot' : ''}`} />
                 <BranchView
                   branch={rung.condition}
                   analysis={rungAnalyses.get(rung.id)}
+                  bitState={bitState}
                   selection={selection}
                   onSelect={(s) => setSelection(s)}
                   onAddItem={addConditionItem}
                   onAddGroup={(branchId) => addGroup(rung.id, branchId)}
                   onAddBranch={addBranch}
+                  onRemoveBranch={removeBranch}
                   onDropOp={(op, branchId) => {
                     if (op && getInstruction(op)?.kind === 'input') addConditionItem(branchId, op);
                   }}
                   rungId={rung.id}
                 />
+                <div className={`ladder-rail ${rungAnalyses.get(rung.id)?.power ? 'hot' : ''}`} />
                 <div className="output-zone">
                   {rung.outputs.map((out) => (
                     <OutputView
@@ -360,7 +395,7 @@ export function LadderEditor() {
                     onClick={() => addOutput(rung.id, pendingOp ?? 'OTE')}
                   />
                 </div>
-                <Rail hot={rungAnalyses.get(rung.id)?.power ?? false} />
+                <div className={`ladder-rail end ${rungAnalyses.get(rung.id)?.power ? 'hot' : ''}`} />
               </div>
             </div>
           ))}
@@ -381,10 +416,6 @@ export function LadderEditor() {
       )}
     </div>
   );
-}
-
-function Rail({ hot }: { hot: boolean }) {
-  return <div className={`rail ${hot ? 'hot' : ''}`} />;
 }
 
 function findBranchById(branch: ConditionBranch, id: string): ConditionBranch | null {
@@ -484,21 +515,25 @@ function Palette({
 function BranchView({
   branch,
   analysis,
+  bitState,
   selection,
   onSelect,
   onAddItem,
   onAddGroup,
   onAddBranch,
+  onRemoveBranch,
   onDropOp,
   rungId,
 }: {
   branch: ConditionBranch;
   analysis?: RungAnalysis;
+  bitState: Map<string, boolean>;
   selection: Selection | null;
   onSelect: (s: Selection) => void;
   onAddItem: (branchId: string, op: string) => void;
   onAddGroup: (branchId: string) => void;
   onAddBranch: (groupId: string) => void;
+  onRemoveBranch: (branchId: string) => void;
   onDropOp: (op: string, branchId: string) => void;
   rungId: string;
 }) {
@@ -506,59 +541,67 @@ function BranchView({
     <div className="series">
       {branch.items.map((item) => {
         if (item.type === 'group') {
-          const state = analysis?.items.get(item.id);
+          const branches = item.branches ?? [];
+          const anyActive = branches.some((b) => analysis?.activeBranches.has(b.id));
           return (
             <div className="parallel" key={item.id}>
-              <div className={`bar ${state?.out ? 'hot' : ''}`} />
+              <div className={`branch-bar ${anyActive ? 'hot' : ''}`} />
               <div className="branch-stack">
-                {(item.branches ?? []).map((sub) => (
-                  <div
-                    className={`branch-row ${analysis?.activeBranches.has(sub.id) ? 'active' : ''}`}
-                    key={sub.id}
-                  >
-                    <BranchView
-                      branch={sub}
-                      analysis={analysis}
-                      selection={selection}
-                      onSelect={onSelect}
-                      onAddItem={onAddItem}
-                      onAddGroup={onAddGroup}
-                      onAddBranch={onAddBranch}
-                      onDropOp={onDropOp}
-                      rungId={rungId}
-                    />
-                  </div>
-                ))}
-                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 3 }}>
-                  <button className="small" onClick={() => onAddBranch(item.id)}>
-                    + branch
-                  </button>
-                </div>
+                {branches.map((sub, i) => {
+                  const active = analysis?.activeBranches.has(sub.id);
+                  return (
+                    <div className={`branch-row ${active ? 'active' : ''}`} key={sub.id}>
+                      <BranchView
+                        branch={sub}
+                        analysis={analysis}
+                        bitState={bitState}
+                        selection={selection}
+                        onSelect={onSelect}
+                        onAddItem={onAddItem}
+                        onAddGroup={onAddGroup}
+                        onAddBranch={onAddBranch}
+                        onRemoveBranch={onRemoveBranch}
+                        onDropOp={onDropOp}
+                        rungId={rungId}
+                      />
+                      {branches.length > 1 && (
+                        <button
+                          className="branch-del"
+                          title="Remove branch"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveBranch(sub.id);
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
+                      <span className="branch-node" data-first={i === 0} data-last={i === branches.length - 1} />
+                    </div>
+                  );
+                })}
+                <button className="add-branch" onClick={() => onAddBranch(item.id)}>
+                  + branch
+                </button>
               </div>
-              <div className={`bar ${state?.out ? 'hot' : ''}`} />
+              <div className={`branch-bar ${anyActive ? 'hot' : ''}`} />
             </div>
           );
         }
         const def = getInstruction(item.op ?? '');
-        const state = analysis?.items.get(item.id);
+        const st = analysis?.items.get(item.id);
         return (
-          <div className="row" style={{ gap: 0, alignItems: 'center' }} key={item.id}>
-            <span className={`wire ${state?.in ? 'hot' : ''}`} />
-            <div
-              className={`lad-item ${state?.out ? 'energized' : ''} ${
-                selection?.kind === 'item' && selection.id === item.id ? 'selected' : ''
-              }`}
-              title={`${item.op} — ${def?.name ?? ''}: ${def?.help ?? ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect({ rungId, kind: 'item', id: item.id });
-              }}
-            >
-              <LadderSymbol op={item.op ?? 'XIC'} hot={state?.out} />
-              <span className="op">{item.op}</span>
-              <span className="tag">{operandSummary(item.op ?? '', item.operands ?? [])}</span>
-            </div>
-          </div>
+          <LadderItem
+            key={item.id}
+            op={item.op ?? 'XIC'}
+            operands={item.operands ?? []}
+            hotIn={st?.in ?? false}
+            hotOut={st?.out ?? false}
+            bit={bitState.get(item.id) ?? false}
+            title={`${item.op} — ${def?.name ?? ''}: ${def?.help ?? ''}`}
+            selected={selection?.kind === 'item' && selection.id === item.id}
+            onClick={() => onSelect({ rungId, kind: 'item', id: item.id })}
+          />
         );
       })}
       <DropSlot
@@ -566,14 +609,40 @@ function BranchView({
         onDrop={(op) => onDropOp(op, branch.id)}
         onClick={() => onAddItem(branch.id, 'XIC')}
       />
-      <button
-        className="small"
-        style={{ marginLeft: 4 }}
-        title="Insert parallel branch"
-        onClick={() => onAddGroup(branch.id)}
-      >
+      <button className="branch-btn" title="Insert parallel branch" onClick={() => onAddGroup(branch.id)}>
         ∥
       </button>
+    </div>
+  );
+}
+
+function LadderItem({
+  op,
+  operands,
+  hotIn,
+  hotOut,
+  bit,
+  title,
+  selected,
+  onClick,
+}: {
+  op: string;
+  operands: string[];
+  hotIn: boolean;
+  hotOut: boolean;
+  bit: boolean;
+  title: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <div className="lad-cell" onClick={(e) => { e.stopPropagation(); onClick(); }}>
+      <div className={`lad-wire ${hotIn ? 'hot' : ''}`} />
+      <div className={`lad-item ${hotOut ? 'energized' : ''} ${selected ? 'selected' : ''}`} title={title}>
+        <LadderSymbol op={op} hot={hotOut} bit={bit} />
+        <span className="lad-op">{op}</span>
+        <span className="lad-tag">{operandSummary(op, operands)}</span>
+      </div>
     </div>
   );
 }
@@ -593,19 +662,15 @@ function OutputView({
 }) {
   const def = getInstruction(op);
   return (
-    <div className="row" style={{ gap: 0, alignItems: 'center' }}>
-      <span className={`wire ${hot ? 'hot' : ''}`} />
+    <div className="lad-cell output" onClick={(e) => { e.stopPropagation(); onSelect(); }}>
+      <div className={`lad-wire ${hot ? 'hot' : ''}`} />
       <div
         className={`lad-item ${hot ? 'energized' : ''} ${selected ? 'selected' : ''}`}
         title={`${op} — ${def?.name ?? ''}: ${def?.help ?? ''}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect();
-        }}
       >
         <LadderSymbol op={op} hot={hot} />
-        <span className="op">{op}</span>
-        <span className="tag">{operandSummary(op, operands)}</span>
+        <span className="lad-op">{op}</span>
+        <span className="lad-tag">{operandSummary(op, operands)}</span>
       </div>
     </div>
   );

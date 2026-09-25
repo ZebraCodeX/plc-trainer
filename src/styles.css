@@ -307,54 +307,75 @@ td.mono,
 .rungs {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .rung {
   display: flex;
   align-items: stretch;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  background: #151b24;
+  border: 1px solid #263140;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .rung.selected {
-  border-color: var(--accent);
+  border-color: #3f5a78;
 }
 
 .rung-gutter {
-  width: 34px;
-  background: var(--panel-2);
+  width: 30px;
+  background: #10161e;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  border-right: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 11px;
+  gap: 2px;
+  border-right: 1px solid #263140;
+  color: #5f7185;
+  font-size: 10px;
 }
 
+.rung-gutter button {
+  padding: 0 4px;
+  font-size: 10px;
+  line-height: 15px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.rung-gutter button:hover {
+  border-color: #3f5a78;
+}
+
+/* continuous Studio 5000 style rung surface */
 .rung-body {
   flex: 1;
   display: flex;
-  align-items: center;
-  min-height: 66px;
-  padding: 6px 8px;
+  align-items: stretch;
+  min-height: 52px;
+  padding: 6px 10px;
   gap: 0;
+  background-image: linear-gradient(#1b2530 1px, transparent 1px);
+  background-size: 100% 22px;
 }
 
-.rail {
+.ladder-rail {
   width: 4px;
   align-self: stretch;
-  background: #3a4a5e;
-  border-radius: 2px;
+  background: #93a4b8;
+  border-radius: 1px;
+  flex: none;
 }
 
-.rail.hot {
+.ladder-rail.hot {
   background: var(--green);
-  box-shadow: 0 0 8px var(--green);
+  box-shadow: 0 0 7px var(--green);
+}
+
+.ladder-rail.end {
+  display: none;
 }
 
 .series {
@@ -363,115 +384,202 @@ td.mono,
   gap: 0;
 }
 
+.lad-cell {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.lad-wire {
+  width: 10px;
+  height: 2px;
+  background: #93a4b8;
+  flex: none;
+}
+
+.lad-wire.hot {
+  background: var(--green);
+  box-shadow: 0 0 5px var(--green);
+}
+
 .lad-item {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 78px;
-  padding: 4px 10px;
-  margin: 0 2px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--panel-2);
-  cursor: pointer;
+  min-width: 96px;
+  padding: 2px 8px 3px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
   user-select: none;
 }
 
 .lad-item:hover {
-  border-color: var(--accent);
+  background: #1d2836;
+  border-color: #34465a;
 }
 
-.lad-item .op {
+.lad-item svg {
+  display: block;
+}
+
+.lad-op {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--accent);
+  letter-spacing: 0.4px;
+  color: #8fb3d9;
+  line-height: 1;
+  margin-top: -2px;
 }
 
-.lad-item .tag {
+.lad-tag {
   font-family: var(--mono);
   font-size: 11px;
-  color: var(--text);
+  color: #e4edf7;
   white-space: nowrap;
-  max-width: 120px;
+  max-width: 132px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.lad-item.energized {
-  border-color: var(--green);
-  box-shadow: 0 0 0 1px var(--green) inset;
-}
-
-.lad-item.energized .op {
+.lad-item.energized .lad-op {
   color: var(--green);
 }
 
+.lad-item.energized .lad-tag {
+  color: #b6f2cd;
+}
+
 .lad-item.selected {
-  outline: 2px solid var(--violet);
+  background: #1f2d40;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .parallel {
   display: flex;
   align-items: stretch;
   gap: 0;
-  margin: 0 2px;
+  position: relative;
+}
+
+.parallel .branch-bar {
+  width: 2px;
+  background: #93a4b8;
+  flex: none;
+}
+
+.parallel .branch-bar.hot {
+  background: var(--green);
+  box-shadow: 0 0 5px var(--green);
 }
 
 .parallel .branch-stack {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 4px 0;
-}
-
-.parallel .bar {
-  width: 4px;
-  border-radius: 2px;
-  background: #3a4a5e;
-  margin: 0 4px;
-}
-
-.parallel .bar.hot {
-  background: var(--green);
+  gap: 0;
+  padding: 2px 0;
+  position: relative;
 }
 
 .branch-row {
   display: flex;
   align-items: center;
+  position: relative;
+  min-height: 40px;
 }
 
 .branch-row.active .lad-item {
-  border-color: var(--green);
+  background: #172a20;
 }
 
+.branch-node {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #93a4b8;
+  margin-left: 3px;
+  flex: none;
+}
+
+.branch-row.active .branch-node {
+  background: var(--green);
+}
+
+.branch-del {
+  position: absolute;
+  right: 2px;
+  top: 1px;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 14px;
+  background: #2a1a1a;
+  border-color: #6a3a3a;
+  opacity: 0;
+  z-index: 2;
+}
+
+.branch-row:hover .branch-del {
+  opacity: 1;
+}
+
+.add-branch {
+  align-self: flex-start;
+  margin: 2px 0 2px 4px;
+  padding: 1px 8px;
+  font-size: 10px;
+  background: #1b2634;
+  border-color: #34465a;
+  color: var(--muted);
+}
+
+.add-branch:hover {
+  color: var(--accent);
+}
+
+.branch-btn {
+  margin-left: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  background: #1b2634;
+  border-color: #34465a;
+  color: var(--muted);
+}
+
+.branch-btn:hover {
+  color: var(--accent);
+}
+
+/* outputs sit after the right rail, like Studio 5000 */
 .output-zone {
   display: flex;
   align-items: center;
-  gap: 2px;
-  margin-left: 6px;
-  padding-left: 6px;
-  border-left: 2px dashed var(--border);
+  gap: 0;
+  padding-left: 0;
 }
 
-.wire {
-  width: 14px;
-  height: 3px;
-  background: #3a4a5e;
-}
-
-.wire.hot {
-  background: var(--green);
-  box-shadow: 0 0 6px var(--green);
+.output-zone .lad-cell.output .lad-wire {
+  width: 12px;
 }
 
 .drop-hint {
-  border: 1px dashed var(--accent);
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #34465a;
+  border-radius: 3px;
+  color: #6d8299;
+  padding: 2px 10px;
+  min-height: 40px;
+  font-size: 14px;
+  margin: 0 3px;
+}
+
+.drop-hint:hover {
+  border-color: var(--accent);
   color: var(--accent);
-  padding: 6px 12px;
-  font-size: 11px;
 }
 
 .empty-state {
@@ -939,23 +1047,5 @@ td.mono,
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   z-index: 60;
   max-width: 80vw;
-}
-
-/* ---------------- Ladder symbol items ---------------- */
-
-.lad-item {
-  min-width: 104px;
-}
-
-.lad-item svg {
-  display: block;
-}
-
-.lad-item .op {
-  font-size: 10px;
-}
-
-.lad-item .tag {
-  max-width: 130px;
 }
 
