@@ -1,4 +1,4 @@
-import { glyph, isCoil, isContact } from '../ladder/glyphs';
+import { isCoil, isContact } from '../ladder/glyphs';
 
 interface Props {
   op: string;
@@ -54,7 +54,10 @@ export function LadderSymbol({ op, hot = false, bit = false }: Props) {
     );
   }
 
-  const label = glyph(u);
+  // Function-block instructions show their mnemonic (TON, ADD, MOV, …) so the
+  // tile reads like a real Logix block, which is clearer than a glyph.
+  const label = u;
+  const size = label.length <= 3 ? 13 : label.length === 4 ? 11 : 9.5;
   return (
     <svg width="52" height="26" viewBox="0 0 52 26" className="sym">
       <line x1="0" y1="13" x2="7" y2="13" stroke={wire} strokeWidth="2" />
@@ -62,9 +65,10 @@ export function LadderSymbol({ op, hot = false, bit = false }: Props) {
       <rect x="7" y="3" width="38" height="20" rx="2" fill="#10161f" stroke={body} strokeWidth="1.4" />
       <text
         x="26"
-        y="19"
-        fontSize="15"
+        y="18.5"
+        fontSize={size}
         fontWeight="700"
+        letterSpacing="0.3"
         fill={body}
         textAnchor="middle"
         fontFamily="var(--mono)"
