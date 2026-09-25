@@ -4,7 +4,7 @@ import { MODULE_CATALOG, getCatalog, makeModule, scaleEngToRaw } from '../engine
 import { makeTag } from '../engine/factory';
 import type { DataType } from '../engine/types';
 import type { IoModule, ModuleKind } from '../engine/model';
-import { formatValue } from './TagInput';
+import { EditableTagValue } from './TagInput';
 import { Guide } from './Guide';
 
 function dataTypeForKind(kind: ModuleKind): DataType {
@@ -12,7 +12,7 @@ function dataTypeForKind(kind: ModuleKind): DataType {
 }
 
 export function IoView() {
-  const { project, applyEdit, engine } = useStore();
+  const { project, applyEdit } = useStore();
   useScanCount();
 
   const modules = [...project.io.modules].sort((a, b) => a.slot - b.slot);
@@ -165,7 +165,7 @@ export function IoView() {
                   </thead>
                   <tbody>
                     {m.channels.map((ch) => {
-                      const v = engine.db.readScalar(ch.tagName);
+                      const tag = project.tags.find((t) => t.name === ch.tagName);
                       return (
                         <tr key={ch.channel}>
                           <td className="mono">{ch.channel}</td>
@@ -178,7 +178,7 @@ export function IoView() {
                             />
                           </td>
                           <td className="mono">
-                            <span className="tag-value">{v === undefined ? '--' : formatValue(v)}</span>
+                            <EditableTagValue refName={ch.tagName} tag={tag} />
                           </td>
                         </tr>
                       );

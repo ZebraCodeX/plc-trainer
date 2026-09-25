@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useStore } from '../store/store';
-import { useTagValue } from '../store/hooks';
 import { makeTag } from '../engine/factory';
 import type { DataType, TagScope } from '../engine/types';
-import { formatValue } from './TagInput';
+import { EditableTagValue } from './TagInput';
 import { Guide } from './Guide';
 
 const DATA_TYPES: DataType[] = ['BOOL', 'SINT', 'INT', 'DINT', 'REAL', 'TIMER', 'COUNTER'];
@@ -126,7 +125,6 @@ function TagRow({
   onChange: (patch: Partial<{ name: string; dataType: DataType; scope: TagScope; description: string; dimensions: number | undefined; preset: number }>) => void;
   onRemove: () => void;
 }) {
-  const value = useTagValue(tag.name);
   return (
     <tr>
       <td>
@@ -172,7 +170,7 @@ function TagRow({
         )}
       </td>
       <td className="mono">
-        <span className="tag-value">{value === undefined ? '--' : formatValue(value)}</span>
+        <EditableTagValue refName={tag.name} tag={tag} />
       </td>
       <td>
         <input

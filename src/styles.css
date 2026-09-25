@@ -606,6 +606,41 @@ td.mono,
   color: var(--amber);
 }
 
+.tag-toggle {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 0 4px;
+  margin: 0;
+  min-width: 22px;
+  text-align: center;
+  cursor: pointer;
+  font-family: var(--mono);
+  color: var(--amber);
+}
+
+.tag-toggle:hover {
+  border-color: #4a5a6e;
+  background: #1b2530;
+}
+
+.tag-toggle.on {
+  color: var(--green);
+}
+
+.tag-edit {
+  padding: 0 4px;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--amber);
+  font-family: var(--mono);
+}
+
+.tag-value.muted {
+  color: var(--muted);
+}
+
 .badge {
   font-size: 10px;
   padding: 1px 5px;
