@@ -5,6 +5,7 @@ import { makeTag } from '../engine/factory';
 import type { DataType } from '../engine/types';
 import type { IoModule, ModuleKind } from '../engine/model';
 import { formatValue } from './TagInput';
+import { Guide } from './Guide';
 
 function dataTypeForKind(kind: ModuleKind): DataType {
   return kind === 'DI' || kind === 'DO' ? 'BOOL' : 'REAL';
@@ -60,6 +61,26 @@ export function IoView() {
 
   return (
     <div className="col">
+      <Guide title="How I/O configuration works" defaultOpen>
+        <ul className="bullets">
+          <li>
+            A real PLC has a <b>chassis</b> with cards in numbered <b>slots</b>. Add modules with the
+            buttons above — each one creates BOOL (digital) or REAL (analog) tags automatically.
+          </li>
+          <li>
+            <b>1756-IB16</b> / <b>OB16E</b> are 16-point digital input / output cards.{' '}
+            <b>IF8</b> / <b>OF8</b> are 8-channel analog cards.
+          </li>
+          <li>
+            Click a channel tag name to rename it (this renames the tag everywhere). Use the{' '}
+            <b>Simulated I/O Panel</b> to flip inputs and watch outputs react.
+          </li>
+          <li>
+            Analog scaling maps raw counts (0–32767) to engineering units (e.g. 0–100%). The slider
+            works in engineering units and shows the raw value beside it.
+          </li>
+        </ul>
+      </Guide>
       <div className="flex" style={{ alignItems: 'flex-start' }}>
         <div className="panel grow">
           <h3>Chassis I/O Configuration</h3>

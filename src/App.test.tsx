@@ -6,11 +6,17 @@ import { App } from './App';
 afterEach(cleanup);
 
 describe('App shell', () => {
-  it('renders the header, run controls and ladder editor', () => {
+  it('renders the header and home screen', () => {
     render(<App />);
-    expect(screen.getByText(/IIoT simulator/)).toBeTruthy();
+    expect(screen.getAllByText(/PLC Trainer/).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /Run/i }).length).toBeGreaterThan(0);
-    // Demo project loads two rungs.
+    expect(screen.getByText(/Getting started in 5 minutes/)).toBeTruthy();
+  });
+
+  it('loads the demo project and shows ladder symbols', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ladder Logic' }));
+    // Demo project loads two rungs with contacts and coils.
     expect(screen.getAllByText('XIC').length).toBeGreaterThan(0);
     expect(screen.getAllByText('OTE').length).toBeGreaterThan(0);
   });

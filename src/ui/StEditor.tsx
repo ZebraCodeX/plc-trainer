@@ -4,6 +4,7 @@ import { EditorView } from '@codemirror/view';
 import { useStore } from '../store/store';
 import { stExtensions } from '../st/codemirror';
 import { makeRoutine } from '../engine/factory';
+import { Guide } from './Guide';
 
 const TEMPLATE = `// Structured Text routine
 // Available: IF/ELSIF/ELSE, CASE, FOR, WHILE, REPEAT and the
@@ -116,6 +117,33 @@ export function StEditor() {
           <span className="pill" style={{ color: 'var(--green)' }}>Syntax OK</span>
         )}
       </div>
+
+      <Guide title="How structured text works" defaultOpen>
+        <ul className="bullets">
+          <li>
+            Structured Text is text-based code that runs on the same scan as ladder. Press{' '}
+            <b>Ctrl+Space</b> for tag and instruction completion.
+          </li>
+          <li>
+            Use <span className="mono">:=</span> to assign, and <span className="mono">IF … THEN …
+            ELSIF … ELSE … END_IF;</span>, <span className="mono">CASE</span>,{' '}
+            <span className="mono">FOR</span>, <span className="mono">WHILE</span> and{' '}
+            <span className="mono">REPEAT</span> for control flow.
+          </li>
+          <li>
+            Operators: <span className="mono">AND OR NOT XOR</span>, comparisons{' '}
+            <span className="mono">= &lt;&gt; &lt; &gt; &lt;= &gt;=</span>, and math{' '}
+            <span className="mono">+ − * / MOD **</span>.
+          </li>
+          <li>
+            Timers/counters: <span className="mono">TON(Timer, Enable, Preset)</span>,{' '}
+            <span className="mono">CTU(Counter, Enable, Preset)</span>,{' '}
+            <span className="mono">RES(Tag)</span>. Read status with{' '}
+            <span className="mono">Timer.DN</span>.
+          </li>
+          <li>Every routine in the project runs in order; the MainRoutine runs first each scan.</li>
+        </ul>
+      </Guide>
 
       {!routine ? (
         <div className="empty-state">

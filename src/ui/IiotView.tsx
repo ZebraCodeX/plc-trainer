@@ -7,6 +7,7 @@ import type { ModbusArea } from '../engine/model';
 import type { MqttMessage } from '../engine/mqtt';
 import { uid } from '../engine/uid';
 import { TagInput } from './TagInput';
+import { Guide } from './Guide';
 
 const AREAS: ModbusArea[] = ['coil', 'discrete', 'input', 'holding'];
 
@@ -116,6 +117,30 @@ export function IiotView() {
           Use real broker
         </label>
       </div>
+
+      <Guide title="How the IIoT gateway works" defaultOpen>
+        <ul className="bullets">
+          <li>
+            <b>MQTT Publish Rules</b> link a tag to a topic. Whenever the tag changes, its value is
+            published. Topics use <span className="mono">/</span> levels, e.g.{' '}
+            <span className="mono">plant/line1/motor/speed</span>.
+          </li>
+          <li>
+            The app runs a <b>built-in broker</b> so it works offline. Toggle <b>Use real broker</b>{' '}
+            and Connect to publish to your own broker (e.g. Mosquitto/HiveMQ) over WebSockets.
+          </li>
+          <li>
+            The <b>MQTT Monitor</b> subscribes to a topic filter. Use <span className="mono">+</span>{' '}
+            for one level and <span className="mono">#</span> for many, e.g.{' '}
+            <span className="mono">plant/#</span>. Retained messages are shown on subscribe.
+          </li>
+          <li>
+            <b>Modbus Register Map</b> exposes tags as coils (0x), discrete inputs (1x), input
+            registers (3x) or holding registers (4x). Use the <b>Client Simulator</b> to read/write
+            by absolute address.
+          </li>
+        </ul>
+      </Guide>
 
       <div className="grid2">
         <div className="panel">

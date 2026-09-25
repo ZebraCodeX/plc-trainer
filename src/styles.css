@@ -744,3 +744,218 @@ td.mono,
     transform: rotate(360deg);
   }
 }
+
+/* ---------------- Home / guide / info ---------------- */
+
+.hero {
+  background: linear-gradient(120deg, #16283a, #101722 60%);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 22px 24px;
+}
+
+.hero h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  color: var(--text);
+}
+
+.hero p {
+  margin: 0;
+  max-width: 720px;
+  line-height: 1.5;
+}
+
+.guide {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.guide.open {
+  border-color: var(--accent-dim);
+}
+
+.guide-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 9px 12px;
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+  text-align: left;
+}
+
+.guide-toggle:hover {
+  background: var(--panel-2);
+  border: none;
+}
+
+.guide-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guide-caret {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.guide-body {
+  padding: 4px 14px 14px 38px;
+  line-height: 1.55;
+}
+
+.guide-body p {
+  margin: 6px 0;
+}
+
+.bullets {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.bullets li {
+  margin: 5px 0;
+  line-height: 1.5;
+}
+
+.steps {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+
+.steps li {
+  margin: 7px 0;
+  line-height: 1.5;
+}
+
+.info {
+  border-left: 3px solid var(--accent);
+  background: var(--panel-2);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.scan-cycle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.scan-node {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+.scan-arrow {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ---------------- Modal / toast ---------------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 12, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal {
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  background: var(--panel);
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modal input[type='text'],
+.modal input:not([type]) {
+  width: 100%;
+}
+
+.choice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  background: var(--panel-2);
+}
+
+.choice.active {
+  border-color: var(--accent);
+  background: #182536;
+}
+
+.choice input {
+  margin-top: 3px;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  background: var(--panel-3);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 60;
+  max-width: 80vw;
+}
+
+/* ---------------- Ladder symbol items ---------------- */
+
+.lad-item {
+  min-width: 104px;
+}
+
+.lad-item svg {
+  display: block;
+}
+
+.lad-item .op {
+  font-size: 10px;
+}
+
+.lad-item .tag {
+  max-width: 130px;
+}
+

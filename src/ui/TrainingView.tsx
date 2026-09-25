@@ -3,6 +3,8 @@ import { useStore } from '../store/store';
 import { PlcEngine } from '../engine/engine';
 import { allLessons } from '../lessons/lessons';
 import type { Lesson, Objective } from '../engine/model';
+import { Guide } from './Guide';
+import { InstructionReference } from './InstructionReference';
 
 interface Result {
   objectiveId: string;
@@ -30,12 +32,16 @@ function gradeObjective(project: ReturnType<typeof useStore.getState>['project']
 }
 
 export function TrainingView() {
-  const { project, loadProject } = useStore();
+  const { project, loadProject, setUi } = useStore();
   const lessons = allLessons();
   const [results, setResults] = useState<Record<string, Result[]>>({});
 
   function load(pack: { lesson: Lesson; project: typeof project }) {
-    loadProject(structuredClone(pack.project));
+    loadProject(pack.project);
+    setUi({
+      activeTab: pack.lesson.id === 'st' ? 'st' : 'ladder',
+      message: `Loaded “${pack.lesson.title}” — program it, then come back and run the checks.`,
+    });
     setResults((r) => ({ ...r, [pack.lesson.id]: [] }));
   }
 
@@ -52,6 +58,23 @@ export function TrainingView() {
           Load a scenario, program it in the editors, then run the automatic checks.
         </span>
       </div>
+
+      <Guide title="How the training scenarios work" defaultOpen>
+        <ul className="bullets">
+          <li>
+            <b>Load scenario</b> replaces the current project with the lesson setup (tags, I/O,
+            plant) and takes you straight to the editor. Program it, then open{' '}
+            <b>Training</b> again.
+          </li>
+          <li>
+            <b>Run checks</b> takes a clean copy of your current project, forces the listed inputs,
+            scans the program, and verifies the expected tags. A green ✓ means that objective passes.
+          </li>
+          <li>
+            Work through them in order: <b>{lessons.map((l) => l.lesson.title).join(' · ')}</b>.
+          </li>
+        </ul>
+      </Guide>
 
       {lessons.map(({ lesson }) => {
         const res = results[lesson.id] ?? [];
@@ -114,6 +137,28 @@ export function TrainingView() {
           file you can export and share.
         </div>
       </div>
+
+      <div className="toolbar" style={{ marginTop: 8 }}>
+        <h3 style={{ margin: 0 }}>Instruction Reference</h3>
+        <span className="muted small">
+          Every abbreviation, its ladder symbol, operands and what it does.
+        </span>
+      </div>
+      <Guide title="Reading the reference">
+        <ul className="bullets">
+          <li>Symbols follow standard ladder notation: two bars = contact, parentheses = coil, box = function.</li>
+          <li>
+            <b>Contacts</b> (XIC/XIO) and <b>compare</b> instructions sit in the condition (left of
+            the coil) and decide whether power reaches the outputs.
+          </li>
+          <li>
+            <b>Coils and function blocks</b> (OTE/OTL/OTU, TON, CTU, MOV, ADD …) sit on the right and
+            execute when the rung is true.
+          </li>
+          <li>Timer and counter instructions need a TIMER/COUNTER tag — create one in the Tag Database.</li>
+        </ul>
+      </Guide>
+      <InstructionReference />
     </div>
   );
 }

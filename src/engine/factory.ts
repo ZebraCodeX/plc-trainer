@@ -15,6 +15,7 @@ import {
 } from './model';
 import { makeModule } from './io';
 import { uid } from './uid';
+import { makeConditionItem } from '../ladder/ops';
 
 export function makeTag(
   name: string,
@@ -82,8 +83,8 @@ export function makeIo(modules: IoConfig['modules']): IoConfig {
 /**
  * A ready-to-run demonstration project: a Start/Stop seal-in motor circuit.
  */
-export function demoProject(): Project {
-  const project = emptyProject('Motor Start/Stop Demo');
+export function demoProject(name = 'Motor Start/Stop Demo'): Project {
+  const project = emptyProject(name);
 
   const tags: Tag[] = [
     makeTag('Start_PB', 'BOOL', { description: 'Start pushbutton (momentary)' }),
@@ -137,5 +138,24 @@ export function demoProject(): Project {
     makeWidget('trend', 40, 260, 'Speed Trend', 'Motor_Speed', { min: 0, max: 1800 }),
   ];
 
+  return project;
+}
+
+/**
+ * A blank but fully usable project: one program with a ladder MainRoutine and
+ * one empty rung, so the ladder editor's drag-and-drop works immediately.
+ */
+export function blankProject(name: string): Project {
+  const project = emptyProject(name);
+  const program = makeProgram('MainProgram');
+  program.routines[0].rungs = [
+    {
+      id: uid('rung'),
+      comment: '',
+      condition: { id: uid('br'), items: [makeConditionItem('XIC')] },
+      outputs: [{ id: uid('in'), op: 'OTE', operands: [''] }],
+    },
+  ];
+  project.programs = [program];
   return project;
 }

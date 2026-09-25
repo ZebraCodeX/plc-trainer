@@ -4,6 +4,7 @@ import { useTagValue } from '../store/hooks';
 import { makeTag } from '../engine/factory';
 import type { DataType, TagScope } from '../engine/types';
 import { formatValue } from './TagInput';
+import { Guide } from './Guide';
 
 const DATA_TYPES: DataType[] = ['BOOL', 'SINT', 'INT', 'DINT', 'REAL', 'TIMER', 'COUNTER'];
 
@@ -57,6 +58,33 @@ export function TagEditor() {
           {project.tags.length} tags · controller &amp; program scope · drag refs happen in the editors
         </span>
       </div>
+
+      <Guide title="How tags work">
+        <ul className="bullets">
+          <li>
+            Tags are the PLC memory. <b>Name</b> them like real signals (e.g.{' '}
+            <span className="mono">Start_PB</span>, <span className="mono">Motor_Cmd</span>). Names
+            must start with a letter and contain no spaces.
+          </li>
+          <li>
+            <b>Type</b>: BOOL is a bit (on/off). SINT/INT/DINT are integers. REAL is a decimal
+            number. <b>TIMER</b> and <b>COUNTER</b> are structured tags with status bits like{' '}
+            <span className="mono">.DN</span>, <span className="mono">.ACC</span> and{' '}
+            <span className="mono">.PRE</span>.
+          </li>
+          <li>
+            <b>Array</b>: set a length to make an array (e.g. 10), then reference{' '}
+            <span className="mono">MyTag[3]</span>.
+          </li>
+          <li>
+            <b>Preset</b> sets the default time/ count for TIMER/COUNTER tags.
+          </li>
+          <li>
+            <b>Live Value</b> updates every scan while the PLC is running. Use <b>Reset</b> in the
+            header to restore initial values.
+          </li>
+        </ul>
+      </Guide>
 
       <div className="panel" style={{ padding: 0, overflow: 'auto' }}>
         <table>

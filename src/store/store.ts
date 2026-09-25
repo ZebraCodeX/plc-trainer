@@ -5,7 +5,16 @@ import { demoProject } from '../engine/factory';
 import type { Project } from '../engine/model';
 import { loadProject, saveProject } from './persistence';
 
-export type AppTab = 'ladder' | 'st' | 'tags' | 'io' | 'plant' | 'hmi' | 'iiot' | 'training';
+export type AppTab =
+  | 'home'
+  | 'ladder'
+  | 'st'
+  | 'tags'
+  | 'io'
+  | 'plant'
+  | 'hmi'
+  | 'iiot'
+  | 'training';
 
 export interface UiState {
   activeTab: AppTab;
@@ -40,7 +49,7 @@ export const useStore = create<State>((set, get) => ({
   past: [],
   future: [],
   ui: {
-    activeTab: 'ladder',
+    activeTab: 'home',
     selectedRungId: null,
     selectedRoutineId: initialProject.programs[0]?.mainRoutineId ?? null,
     monitor: true,
@@ -64,7 +73,16 @@ export const useStore = create<State>((set, get) => ({
 
   loadProject: (project) => {
     engine.setProject(project);
-    set({ project, past: [], future: [] });
+    set({
+      project,
+      past: [],
+      future: [],
+      ui: {
+        ...get().ui,
+        selectedRoutineId: project.programs[0]?.mainRoutineId ?? null,
+        selectedRungId: null,
+      },
+    });
     saveProject(project);
   },
 

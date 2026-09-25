@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore, type AppTab } from './store/store';
 import { useRunning, useScanCount } from './store/hooks';
 import { exportProjectFile, importProjectFile } from './store/persistence';
 import { bridge } from './store/bridge';
-import { emptyProject } from './engine/model';
 import { demoProject } from './engine/factory';
+import { HomeView } from './ui/HomeView';
 import { LadderEditor } from './ui/LadderEditor';
 import { StEditor } from './ui/StEditor';
 import { TagEditor } from './ui/TagEditor';
@@ -13,8 +13,10 @@ import { PlantView } from './ui/PlantView';
 import { HmiView } from './ui/HmiView';
 import { IiotView } from './ui/IiotView';
 import { TrainingView } from './ui/TrainingView';
+import { NewProjectDialog } from './ui/NewProjectDialog';
 
 const TABS: { id: AppTab; label: string }[] = [
+  { id: 'home', label: 'Home' },
   { id: 'ladder', label: 'Ladder Logic' },
   { id: 'st', label: 'Structured Text' },
   { id: 'tags', label: 'Tag Database' },
@@ -26,9 +28,10 @@ const TABS: { id: AppTab; label: string }[] = [
 ];
 
 export function App() {
-  const { project, ui, setUi, engine, loadProject, undo, redo } = useStore();
+  const { project, ui, setUi, engine, loadProject, undo, redo, setMessage } = useStore();
   const running = useRunning();
   const scanCount = useScanCount();
+  const [newOpen, setNewOpen] = useState(false);
 
   useEffect(() => {
     engine.hooks.afterScan = () => {
@@ -38,6 +41,12 @@ export function App() {
       }
     };
   }, [engine]);
+
+  useEffect(() => {
+    if (!ui.message) return;
+    const t = setTimeout(() => setMessage(''), 4000);
+    return () => clearTimeout(t);
+  }, [ui.message, setMessage]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -66,7 +75,8 @@ export function App() {
     <div className="app">
       <header className="app-header">
         <div className="brand">
-          PLC Trainer <small>Ladder · ST · IIoT simulator</small>
+          PLC Trainer{' '}
+          <small title={project.description || project.name}>{project.name}</small>
         </div>
         <div className="row" style={{ gap: 6 }}>
           <button className={running ? 'danger' : 'primary'} onClick={() => engine.toggle()}>
@@ -95,13 +105,18 @@ export function App() {
         <div className="row" style={{ gap: 6 }}>
           <button onClick={undo}>Undo</button>
           <button onClick={redo}>Redo</button>
+          <button className="primary" onClick={() => setNewOpen(true)}>
+            + New
+          </button>
           <button onClick={() => loadProject(demoProject())}>Demo</button>
-          <button onClick={() => loadProject(emptyProject('New Project'))}>New</button>
           <button onClick={() => exportProjectFile(project)}>Export</button>
           <button
             onClick={async () => {
               const p = await importProjectFile();
-              if (p) loadProject(p);
+              if (p) {
+                loadProject(p);
+                setUi({ activeTab: 'ladder', message: `Imported “${p.name}”` });
+              }
             }}
           >
             Import
@@ -122,6 +137,7 @@ export function App() {
       </nav>
 
       <main className="content">
+        {ui.activeTab === 'home' && <HomeView onNewProject={() => setNewOpen(true)} />}
         {ui.activeTab === 'ladder' && <LadderEditor />}
         {ui.activeTab === 'st' && <StEditor />}
         {ui.activeTab === 'tags' && <TagEditor />}
@@ -131,6 +147,10 @@ export function App() {
         {ui.activeTab === 'iiot' && <IiotView />}
         {ui.activeTab === 'training' && <TrainingView />}
       </main>
+
+      {ui.message && <div className="toast">{ui.message}</div>}
+
+      <NewProjectDialog open={newOpen} onClose={() => setNewOpen(false)} />
     </div>
   );
 }

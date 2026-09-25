@@ -4,6 +4,7 @@ import { useScanCount, useTagValue } from '../store/hooks';
 import type { HmiWidget, HmiWidgetType } from '../engine/model';
 import { makeWidget } from '../engine/factory';
 import { TagInput } from './TagInput';
+import { Guide } from './Guide';
 
 const WIDGET_TYPES: { type: HmiWidgetType; label: string }[] = [
   { type: 'indicator', label: 'Indicator' },
@@ -85,6 +86,27 @@ export function HmiView() {
         <h3 style={{ margin: 0 }}>HMI / SCADA Dashboard</h3>
         <span className="muted small">Drag widgets onto the screen and bind them to tags.</span>
       </div>
+
+      <Guide title="How the HMI works">
+        <ul className="bullets">
+          <li>
+            Drag a <b>widget</b> onto the screen, then select it to set its <b>label</b> and{' '}
+            <b>tag binding</b>.
+          </li>
+          <li>
+            <b>Indicator</b> shows a BOOL as a lamp. <b>Momentary Button</b> forces a tag true while
+            held; <b>Switch</b> toggles it — perfect for Start/Stop and HMI inputs.
+          </li>
+          <li>
+            <b>Numeric</b>, <b>Gauge</b> and <b>Bar</b> display numeric tags. Set min/max in the
+            binding’s props for gauges and bars.
+          </li>
+          <li>
+            <b>Trend</b> draws a live chart of the bound tag’s value over recent scans.
+          </li>
+          <li>Move widgets by dragging; resize with the W/H fields. Everything binds to the same tag database.</li>
+        </ul>
+      </Guide>
       <div className="flex" style={{ alignItems: 'flex-start' }}>
         <div className="panel" style={{ width: 200 }}>
           <h3>Widgets</h3>

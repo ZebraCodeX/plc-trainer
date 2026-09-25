@@ -18,6 +18,8 @@ import type { ConditionBranch, ConditionItem, Routine, Rung } from '../engine/mo
 import { uid } from '../engine/uid';
 import { makeRoutine } from '../engine/factory';
 import { TagInput } from './TagInput';
+import { LadderSymbol } from './LadderSymbol';
+import { Guide } from './Guide';
 import type { Tag } from '../engine/types';
 
 interface Selection {
@@ -236,6 +238,33 @@ export function LadderEditor() {
         onRename={renameRoutine}
         onDelete={deleteRoutine}
       />
+
+      <Guide title="How ladder logic works">
+        <ul className="bullets">
+          <li>
+            <b>Rungs</b> are evaluated left to right. Power flows from the left rail through{' '}
+            <b>contacts</b> to the <b>coils</b> on the right. Green means the path is energized this
+            scan.
+          </li>
+          <li>
+            Click an instruction in the palette, then click a <span className="mono">+</span> slot —
+            or drag the chip onto the slot. Click any element to change its tag or instruction.
+          </li>
+          <li>
+            Contacts: <b>XIC</b> is normally open (passes when ON), <b>XIO</b> is normally closed
+            (passes when OFF). Coils: <b>OTE</b> follows the rung, <b>OTL</b>/<b>OTU</b> latch and
+            unlatch.
+          </li>
+          <li>
+            Use the <b>∥</b> button to add a parallel branch, and <b>+ branch</b> inside a branch to
+            nest more. Put the “seal-in” contact in parallel with the start button.
+          </li>
+          <li>
+            Timers/counters are structured tags — create one in the Tag Database first (e.g.{' '}
+            <span className="mono">Run_Timer</span>), then use it in TON/CTU.
+          </li>
+        </ul>
+      </Guide>
 
       <div className="ladder-toolbar">
         <button onClick={addRung} className="primary">
@@ -519,12 +548,13 @@ function BranchView({
               className={`lad-item ${state?.out ? 'energized' : ''} ${
                 selection?.kind === 'item' && selection.id === item.id ? 'selected' : ''
               }`}
-              title={def?.help}
+              title={`${item.op} — ${def?.name ?? ''}: ${def?.help ?? ''}`}
               onClick={(e) => {
                 e.stopPropagation();
                 onSelect({ rungId, kind: 'item', id: item.id });
               }}
             >
+              <LadderSymbol op={item.op ?? 'XIC'} hot={state?.out} />
               <span className="op">{item.op}</span>
               <span className="tag">{operandSummary(item.op ?? '', item.operands ?? [])}</span>
             </div>
@@ -567,12 +597,13 @@ function OutputView({
       <span className={`wire ${hot ? 'hot' : ''}`} />
       <div
         className={`lad-item ${hot ? 'energized' : ''} ${selected ? 'selected' : ''}`}
-        title={def?.help}
+        title={`${op} — ${def?.name ?? ''}: ${def?.help ?? ''}`}
         onClick={(e) => {
           e.stopPropagation();
           onSelect();
         }}
       >
+        <LadderSymbol op={op} hot={hot} />
         <span className="op">{op}</span>
         <span className="tag">{operandSummary(op, operands)}</span>
       </div>

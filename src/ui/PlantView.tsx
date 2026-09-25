@@ -5,6 +5,7 @@ import { PROCESS_DEFS, type TerminalDef } from '../engine/process';
 import type { ProcessComponent, ProcessType } from '../engine/model';
 import { makeComponent } from '../engine/factory';
 import { TagInput } from './TagInput';
+import { Guide } from './Guide';
 
 const TYPE_LIST = Object.values(PROCESS_DEFS);
 
@@ -93,6 +94,29 @@ export function PlantView() {
         <h3 style={{ margin: 0 }}>Plant Simulation</h3>
         <span className="muted small">Drag a component onto the canvas, then wire its terminals to tags.</span>
       </div>
+
+      <Guide title="How the plant simulation works">
+        <ul className="bullets">
+          <li>
+            Drag a machine from <b>Components</b> onto the canvas (or click to place it), then drag
+            the item to move it.
+          </li>
+          <li>
+            Select a component to open the <b>Wiring</b> panel. Each terminal is either <b>IN</b>{' '}
+            (PLC drives the machine, e.g. Motor_Cmd) or <b>OUT</b> (the machine drives a tag the PLC
+            reads, e.g. Motor_Running).
+          </li>
+          <li>
+            Bind terminals to tags from your Tag Database or I/O config. The machine then behaves
+            physically — the motor ramps up, the tank fills and drains, the heater warms up.
+          </li>
+          <li>
+            <b>Parameters</b> tune the behaviour (speed, rates, delays). The <b>Sensor</b> component
+            has a slider so you can inject a value like temperature or level.
+          </li>
+          <li>Run the PLC (▶ in the header) to see everything animate live.</li>
+        </ul>
+      </Guide>
 
       <div className="flex" style={{ alignItems: 'flex-start' }}>
         <div className="panel" style={{ width: 220 }}>
