@@ -131,4 +131,15 @@ describe('App shell', () => {
     expect(screen.getByText('Timers')).toBeTruthy();
     expect(screen.getByText('Move')).toBeTruthy();
   });
+
+  it('adds a rung from the integrated topbar toolbar', async () => {
+    await registerUser('rung', 'pw12', 'Rung');
+    await signInThroughUi('rung', 'pw12');
+    fireEvent.click(screen.getByRole('button', { name: 'Ladder Logic' }));
+
+    const before = document.querySelectorAll('.rung').length;
+    fireEvent.click(screen.getByTitle('Add a new rung'));
+    const after = document.querySelectorAll('.rung').length;
+    expect(after).toBe(before + 1);
+  });
 });

@@ -9,19 +9,18 @@ import {
   findGroupContainingBranch,
   findItem,
   makeConditionItem,
-  makeEmptyBranch,
   makeOutputInstruction,
   removeConditionItem,
   updateOutput,
 } from '../ladder/ops';
-import { INSTRUCTIONS, getInstruction, operandAccepts, type InstructionDef } from '../engine/instructions';
+import { INSTRUCTIONS, getInstruction, operandAccepts } from '../engine/instructions';
 import type { ConditionBranch, ConditionItem, Routine, Rung } from '../engine/model';
 import { uid } from '../engine/uid';
 import { TagInput } from './TagInput';
 import { LadderSymbol } from './LadderSymbol';
 import { Guide } from './Guide';
 import { Icon } from './icons';
-import { instructionColor, CATEGORY_COLORS } from '../ladder/colors';
+import { instructionColor } from '../ladder/colors';
 import type { Tag } from '../engine/types';
 
 interface Selection {
@@ -59,8 +58,9 @@ export function LadderEditor() {
     routines.find((r) => r.id === ui.selectedRoutineId) ?? routines.find((r) => r.type === 'ladder') ?? routines[0];
 
   const [selection, setSelection] = useState<Selection | null>(null);
-  const [pendingOp, setPendingOp] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const pendingOp = ui.pendingOp;
+  const setPendingOp = (op: string | null) => setUi({ pendingOp: op });
 
   const rungAnalyses = useMemo(() => {
     const map = new Map<string, RungAnalysis>();
@@ -109,17 +109,6 @@ export function LadderEditor() {
     mutateRoutine(routine.id, (rt) => {
       const rung = rt.rungs.find((r) => r.id === rungId);
       if (rung) fn(rung);
-    });
-  }
-
-  function addRung() {
-    mutateRoutine(routine.id, (rt) => {
-      rt.rungs.push({
-        id: uid('rung'),
-        comment: '',
-        condition: makeEmptyBranch(),
-        outputs: [makeOutputInstruction('OTE')],
-      });
     });
   }
 
@@ -261,46 +250,13 @@ export function LadderEditor() {
         </ul>
       </Guide>
 
-      <div className="ladder-toolbar">
-        <button onClick={addRung} className="btn-add-rung">
-          <Icon name="plus" size={15} /> Rung
-        </button>
-        <label className="pill">
-          <input
-            type="checkbox"
-            checked={ui.monitor}
-            onChange={(e) => setUi({ monitor: e.target.checked })}
-          />
-          Live power flow
-        </label>
-        <span className="muted small">
-          Pick an instruction, then click a <b>+</b> slot — or drag it onto a slot.
-        </span>
-        {pendingOp && (
-          <span className="pill placing">
-            Placing <b className="mono">{pendingOp}</b>{' '}
-            <button onClick={() => setPendingOp(null)}>cancel</button>
+      {error && (
+        <div className="row" style={{ marginBottom: 10 }}>
+          <span className="pill" style={{ color: 'var(--red)' }}>
+            {error}
           </span>
-        )}
-        {error && <span className="pill" style={{ color: 'var(--red)' }}>{error}</span>}
-      </div>
-
-      <div className="ladder-palette-bar">
-        <PaletteMenu
-          title="Conditions"
-          instructions={INPUT_INSTS}
-          pending={pendingOp}
-          onPick={setPendingOp}
-          onClose={() => setPendingOp(null)}
-        />
-        <PaletteMenu
-          title="Outputs"
-          instructions={OUTPUT_INSTS}
-          pending={pendingOp}
-          onPick={setPendingOp}
-          onClose={() => setPendingOp(null)}
-        />
-      </div>
+        </div>
+      )}
 
       <div className="ladder-layout">
         <div className="ladder-frame">
@@ -439,101 +395,6 @@ function DropSlot({
       {over ? 'Drop' : label}
     </div>
   );
-}
-
-function PaletteMenu({
-  title,
-  instructions,
-  pending,
-  onPick,
-  onClose,
-}: {
-  title: string;
-  instructions: InstructionDef[];
-  pending: string | null;
-  onPick: (op: string) => void;
-  onClose: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const categories = [...new Set(instructions.map((i) => i.category))];
-
-  return (
-    <div className="palette-menu">
-      <button
-        className={`palette-menu-btn ${open ? 'open' : ''} ${pending ? 'armed' : ''}`}
-        onClick={() => setOpen((o) => !o)}
-        title={`${title} menu`}
-      >
-        {title}
-        <span className="caret">▾</span>
-      </button>
-      {open && (
-        <>
-          <div className="palette-scrim" onClick={() => setOpen(false)} />
-          <div className="palette-dropdown">
-            {categories.map((cat) => (
-              <div key={cat} className="palette-row">
-                <span
-                  className="palette-cat-inline"
-                  style={{ color: CATEGORY_COLORS[cat] }}
-                  title={categoryLabelOf(cat)}
-                >
-                  <span className="palette-dot" style={{ background: CATEGORY_COLORS[cat] }} />
-                  {categoryLabelOf(cat)}
-                </span>
-                <div className="palette-row-items">
-                  {instructions
-                    .filter((i) => i.category === cat)
-                    .map((i) => (
-                      <button
-                        key={i.mnemonic}
-                        className={`rung-chip ${pending === i.mnemonic ? 'picked' : ''}`}
-                        style={{ ['--op-color' as string]: instructionColor(i.mnemonic) }}
-                        draggable
-                        title={`${i.mnemonic} — ${i.name}: ${i.help}`}
-                        onDragStart={(e) => e.dataTransfer.setData('text/op', i.mnemonic)}
-                        onClick={() => {
-                          onPick(i.mnemonic);
-                          setOpen(false);
-                        }}
-                      >
-                        <LadderSymbol op={i.mnemonic} />
-                      </button>
-                    ))}
-                </div>
-              </div>
-            ))}
-            <div className="palette-dropdown-foot">
-              <span className="muted small">Click or drag an instruction onto a rung slot</span>
-              <button
-                className="small"
-                onClick={() => {
-                  onClose();
-                  setOpen(false);
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function categoryLabelOf(cat: string): string {
-  const labels: Record<string, string> = {
-    bit: 'Bit & Contacts',
-    timer: 'Timers',
-    counter: 'Counters',
-    compare: 'Compare',
-    math: 'Math',
-    move: 'Move',
-    logical: 'Bitwise Logic',
-    program: 'Program Control',
-  };
-  return labels[cat] ?? cat;
 }
 
 function BranchView({

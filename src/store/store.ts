@@ -2,7 +2,9 @@ import { create } from 'zustand';
 import { produce } from 'immer';
 import { PlcEngine } from '../engine/engine';
 import { demoProject } from '../engine/factory';
-import type { Project } from '../engine/model';
+import type { Project, Routine } from '../engine/model';
+import { makeEmptyBranch, makeOutputInstruction } from '../ladder/ops';
+import { uid } from '../engine/uid';
 import { loadProject, saveProject } from './persistence';
 
 export type AppTab =
@@ -22,6 +24,8 @@ export interface UiState {
   selectedRungId: string | null;
   selectedRoutineId: string | null;
   monitor: boolean;
+  /** Instruction selected in the ladder palette, awaiting placement. */
+  pendingOp: string | null;
   message: string;
 }
 
@@ -39,6 +43,8 @@ interface State {
   redo: () => void;
   setUi: (patch: Partial<UiState>) => void;
   setMessage: (message: string) => void;
+  /** Add a new rung to the active ladder routine (used by the topbar toolbar). */
+  addRung: () => void;
 }
 
 const initialProject = loadProject() ?? demoProject();
@@ -54,6 +60,7 @@ export const useStore = create<State>((set, get) => ({
     selectedRungId: null,
     selectedRoutineId: initialProject.programs[0]?.mainRoutineId ?? null,
     monitor: true,
+    pendingOp: null,
     message: '',
   },
 
@@ -107,4 +114,27 @@ export const useStore = create<State>((set, get) => ({
 
   setUi: (patch) => set((state) => ({ ui: { ...state.ui, ...patch } })),
   setMessage: (message) => set((state) => ({ ui: { ...state.ui, message } })),
+
+  addRung: () => {
+    const { project, ui } = get();
+    const program = project.programs[0];
+    if (!program) return;
+    const routine: Routine | undefined =
+      program.routines.find((r) => r.id === ui.selectedRoutineId && r.type === 'ladder') ??
+      program.routines.find((r) => r.type === 'ladder');
+    if (!routine) return;
+    get().applyEdit(
+      (p) => {
+        const rt = p.programs.flatMap((prg) => prg.routines).find((r) => r.id === routine.id);
+        if (!rt) return;
+        rt.rungs.push({
+          id: uid('rung'),
+          comment: '',
+          condition: makeEmptyBranch(),
+          outputs: [makeOutputInstruction('OTE')],
+        });
+      },
+      'content',
+    );
+  },
 }));

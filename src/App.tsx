@@ -17,6 +17,7 @@ import { IiotView } from './ui/IiotView';
 import { TrainingView } from './ui/TrainingView';
 import { NewProjectDialog } from './ui/NewProjectDialog';
 import { Explorer } from './ui/explorer/Explorer';
+import { LadderToolbar } from './ui/LadderToolbar';
 import { Icon, TabIcon } from './ui/icons';
 import { GameBoard } from './game/GameBoard';
 import { GameArena } from './game/GameArena';
@@ -316,7 +317,13 @@ export function App() {
               </>
             )}
           </div>
-        </header>
+          </header>
+        )}
+
+        {!inArena && ui.activeTab === 'ladder' && (
+          <div className="context-bar">
+            <LadderToolbar />
+          </div>
         )}
 
         <main className={`content ${inArena ? 'content-arena' : ''}`}>

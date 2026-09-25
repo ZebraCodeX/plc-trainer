@@ -770,7 +770,17 @@ td.mono,
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 12px;
+}
+
+/* Secondary toolbar row attached under the topbar */
+.context-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 16px;
+  background: #10161e;
+  border-bottom: 1px solid var(--border);
 }
 
 .btn-add-rung {
@@ -791,27 +801,12 @@ td.mono,
   display: block;
 }
 
-.ladder-palette-bar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  margin-bottom: 10px;
-  background: #10161e;
-  border: 1px solid #263140;
-  border-radius: 8px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-}
-
 .palette-menu {
   position: relative;
 }
 
-/* Keep the last dropdown from overflowing the right edge */
-.ladder-palette-bar > .palette-menu:last-child .palette-dropdown {
+/* Keep the dropdown from overflowing the right edge */
+.context-bar .palette-menu:last-of-type .palette-dropdown {
   left: auto;
   right: 0;
 }
@@ -3046,8 +3041,8 @@ body {
 
 /* --- Ladder page --- */
 @media (max-width: 720px) {
-  .ladder-palette-bar {
-    position: static;
+  .context-bar {
+    padding: 6px 10px;
   }
 
   .palette-dropdown {
