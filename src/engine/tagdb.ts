@@ -158,6 +158,27 @@ export class TagDatabase {
   rawValue(ref: string, programId?: string): TagValue | TagValueArray | undefined {
     return this.getValue(ref, programId);
   }
+
+  /**
+   * Ensure a scalar tag exists (used by Structured Text for local variables such
+   * as loop counters that the user did not declare in the tag database).
+   */
+  ensureScalar(name: string, programId?: string): void {
+    const parsed = parseRef(name);
+    if (!parsed) return;
+    const base = programId ? `${programId}:${parsed.name}` : parsed.name;
+    if (parsed.index !== undefined) return;
+    if (this.byQualified.has(base)) return;
+    const id = `local_${parsed.name}`;
+    if (this.tags.has(id)) return;
+    this.addTag({
+      id,
+      name: parsed.name,
+      dataType: 'DINT',
+      scope: programId ? 'program' : 'controller',
+      programId,
+    });
+  }
 }
 
 export function isReadable(tag: Tag | undefined): boolean {

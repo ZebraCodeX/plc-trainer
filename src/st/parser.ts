@@ -410,8 +410,11 @@ class Parser {
         this.next();
         const idx = this.parseExpression();
         this.expectPunct(']');
-        if (idx.kind === 'num') name += `[${idx.value}]`;
-        else name += '[0]';
+        if (idx.kind === 'num') {
+          name += `[${idx.value}]`;
+        } else {
+          return { kind: 'index', name, index: idx };
+        }
       } else {
         break;
       }

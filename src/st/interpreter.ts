@@ -8,9 +8,13 @@ type Value = number | boolean | string;
 
 const MAX_ITER = 200000;
 
-function refName(e: Expr): string | undefined {
+function refName(ctx: RunContext, e: Expr): string | undefined {
   if (e.kind === 'ref') return e.name;
   if (e.kind === 'str') return e.value;
+  if (e.kind === 'index') {
+    const idx = Math.round(num(evalExpr(ctx, e.index)));
+    return `${e.name}[${idx}]`;
+  }
   return undefined;
 }
 
@@ -24,6 +28,12 @@ export function evalExpr(ctx: RunContext, e: Expr): Value {
       return e.value;
     case 'ref': {
       const v = ctx.db.readScalar(e.name, ctx.programId);
+      if (v === undefined) return 0;
+      return v;
+    }
+    case 'index': {
+      const idx = Math.round(num(evalExpr(ctx, e.index)));
+      const v = ctx.db.readScalar(`${e.name}[${idx}]`, ctx.programId);
       if (v === undefined) return 0;
       return v;
     }
@@ -102,7 +112,7 @@ function compareValues(a: Value, b: Value): number {
 function execInstructionCall(ctx: RunContext, name: string, args: Expr[]): void {
   const upper = name.toUpperCase();
   const a0 = args[0];
-  const destName = a0 ? refName(a0) : undefined;
+  const destName = a0 ? refName(ctx, a0) : undefined;
 
   switch (upper) {
     case 'TON':
@@ -216,7 +226,7 @@ function execInstructionCall(ctx: RunContext, name: string, args: Expr[]): void 
       return;
     }
     case 'MOV': {
-      const dn = args[1] ? refName(args[1]) : undefined;
+      const dn = args[1] ? refName(ctx, args[1]) : undefined;
       if (!dn) return;
       const v = evalExpr(ctx, args[0]);
       writeValue(ctx, dn, v);
@@ -234,7 +244,7 @@ function execInstructionCall(ctx: RunContext, name: string, args: Expr[]): void 
     case 'AND':
     case 'OR':
     case 'XOR': {
-      const dn = args[2] ? refName(args[2]) : undefined;
+      const dn = args[2] ? refName(ctx, args[2]) : undefined;
       if (!dn) return;
       const x = num(evalExpr(ctx, args[0]));
       const y = num(evalExpr(ctx, args[1]));
@@ -254,7 +264,7 @@ function execInstructionCall(ctx: RunContext, name: string, args: Expr[]): void 
     case 'ABS':
     case 'NEG':
     case 'NOT': {
-      const dn = args[1] ? refName(args[1]) : undefined;
+      const dn = args[1] ? refName(ctx, args[1]) : undefined;
       if (!dn) return;
       const x = num(evalExpr(ctx, args[0]));
       let r = 0;
@@ -266,12 +276,12 @@ function execInstructionCall(ctx: RunContext, name: string, args: Expr[]): void 
       return;
     }
     case 'JSR': {
-      const rn = a0 ? refName(a0) : undefined;
+      const rn = a0 ? refName(ctx, a0) : undefined;
       if (rn && ctx.callRoutine) ctx.callRoutine(rn);
       return;
     }
     case 'CPT': {
-      const dn = args[0] ? refName(args[0]) : undefined;
+      const dn = args[0] ? refName(ctx, args[0]) : undefined;
       if (!dn) return;
       const v = evalExpr(ctx, args[1]);
       ctx.db.writeScalar(dn, num(v), ctx.programId);
@@ -304,7 +314,7 @@ function execBlock(ctx: RunContext, stmts: Stmt[]): Flow {
 function execStmt(ctx: RunContext, s: Stmt): Flow {
   switch (s.kind) {
     case 'assign': {
-      const ref = refName(s.target);
+      const ref = refName(ctx, s.target);
       if (!ref) return 'normal';
       const v = evalExpr(ctx, s.value);
       writeValue(ctx, ref, v);
@@ -349,6 +359,7 @@ function execStmt(ctx: RunContext, s: Stmt): Flow {
       const step = s.step ? num(evalExpr(ctx, s.step)) : 1;
       const dir = step >= 0 ? 1 : -1;
       let guard = 0;
+      ctx.db.ensureScalar(s.varName, ctx.programId);
       for (let i = from; dir > 0 ? i <= to : i >= to; i += step) {
         ctx.db.writeScalar(s.varName, i, ctx.programId);
         const flow = execBlock(ctx, s.body);

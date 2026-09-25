@@ -109,4 +109,12 @@ describe('App shell', () => {
     expect(screen.getByText('Explorer')).toBeTruthy();
     expect(screen.getByText('Programs')).toBeTruthy();
   });
+
+  it('opens the PLCommando game board', async () => {
+    await registerUser('gamer', 'pw12', 'Gamer');
+    await signInThroughUi('gamer', 'pw12');
+    fireEvent.click(screen.getByRole('button', { name: 'PLCommando' }));
+    expect(screen.getAllByText('PLCommando').length).toBeGreaterThan(0);
+    expect(screen.getByText('The Runaway Motor')).toBeTruthy();
+  });
 });

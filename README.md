@@ -4,6 +4,7 @@ A browser-based PLC and industrial automation training simulator. Program in **L
 
 ## Features
 
+- **PLCommando game** — an interactive campaign that teaches PLC programming: 10 missions of rising difficulty, behavioural tests, scoring, XP, ranks and achievements.
 - **File explorer** — a VS Code–style sidebar tree of your programs, routines, hardware, data and screens; click any item to open it.
 - **Accounts** — sign in / out with local accounts (stored only in your browser).
 - **Ladder Logic editor** — drag-and-drop rungs, contacts, coils, timers, counters, math/compare instructions, nested parallel branches, live power-flow animation and online value monitoring.
@@ -14,6 +15,14 @@ A browser-based PLC and industrial automation training simulator. Program in **L
 - **HMI / SCADA** — dashboard widgets (indicators, buttons, gauges, bars, trends) bound to tags.
 - **IIoT** — built-in MQTT broker simulation with wildcards and retained messages, optional real broker over WebSockets, plus a Modbus register-map simulator.
 - **Training** — sample scenarios with automatic objective checks.
+
+## The PLCommando game
+
+Open the **PLCommando** tab to play a mission-based game built on the same PLC
+engine. Each shift hands you a broken machine and a set of behavioural tests;
+rewrite the ladder or Structured Text logic, run the tests, then deploy. Faster,
+hint-free fixes score more stars and XP, which raise your rank from Trainee to
+Controls Lead. Progress is saved per browser with the rest of your work.
 
 ## Getting started
 

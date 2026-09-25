@@ -33,6 +33,17 @@ export const TabIcon = ({ tab, size = 18 }: { tab: AppTab; size?: number }) => {
         </>,
         size,
       );
+    case 'game':
+      return base(
+        <>
+          <rect x="2.5" y="7" width="19" height="10" rx="4" />
+          <path d="M7 10v4" />
+          <path d="M5 12h4" />
+          <circle cx="16" cy="11" r="1.1" />
+          <circle cx="18.5" cy="13.5" r="1.1" />
+        </>,
+        size,
+      );
     case 'ladder':
       return base(
         <>

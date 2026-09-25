@@ -7,6 +7,7 @@ import { loadProject, saveProject } from './persistence';
 
 export type AppTab =
   | 'home'
+  | 'game'
   | 'ladder'
   | 'st'
   | 'tags'

@@ -24,3 +24,5 @@ export function useTagValue(ref: string | undefined): Scalar | undefined {
     ref ? engine.db.readScalar(ref) : undefined,
   );
 }
+
+export { useGame } from '../game/store';

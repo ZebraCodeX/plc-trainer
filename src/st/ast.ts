@@ -12,6 +12,7 @@ export type Expr =
   | { kind: 'bool'; value: boolean }
   | { kind: 'str'; value: string }
   | { kind: 'ref'; name: string }
+  | { kind: 'index'; name: string; index: Expr }
   | { kind: 'bin'; op: string; left: Expr; right: Expr }
   | { kind: 'un'; op: string; operand: Expr }
   | { kind: 'call'; name: string; args: Expr[] };

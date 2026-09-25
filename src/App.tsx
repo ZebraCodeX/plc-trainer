@@ -18,6 +18,10 @@ import { TrainingView } from './ui/TrainingView';
 import { NewProjectDialog } from './ui/NewProjectDialog';
 import { Explorer } from './ui/explorer/Explorer';
 import { Icon, TabIcon } from './ui/icons';
+import { GameBoard } from './game/GameBoard';
+import { GameArena } from './game/GameArena';
+import { useGame } from './game/store';
+import { rankForXp } from './game/types';
 
 interface NavGroup {
   label: string;
@@ -27,7 +31,10 @@ interface NavGroup {
 const NAV: NavGroup[] = [
   {
     label: 'Overview',
-    items: [{ id: 'home', label: 'Home', hint: 'Getting started and how the simulator works' }],
+    items: [
+      { id: 'home', label: 'Home', hint: 'Getting started and how the simulator works' },
+      { id: 'game', label: 'PLCommando', hint: 'The interactive PLC programming game' },
+    ],
   },
   {
     label: 'Program',
@@ -74,6 +81,8 @@ export function App() {
   const [explorerOpen, setExplorerOpen] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, ready, init, logout, accounts } = useAuth();
+  const game = useGame();
+  const gameRun = game.run;
 
   useEffect(() => {
     void init();
@@ -122,6 +131,8 @@ export function App() {
     setNavOpen(false);
   }
 
+  const inArena = ui.activeTab === 'game' && !!gameRun;
+
   if (!ready) {
     return <div className="boot-screen">Loading PLC Trainer…</div>;
   }
@@ -131,7 +142,11 @@ export function App() {
   }
 
   return (
-    <div className={`app ${navOpen ? 'nav-open' : ''} ${explorerOpen ? 'explorer-open' : ''}`}>
+    <div
+      className={`app ${navOpen ? 'nav-open' : ''} ${explorerOpen ? 'explorer-open' : ''} ${
+        inArena ? 'arena-mode' : ''
+      }`}
+    >
       <aside className="sidebar">
         <div className="sidebar-brand">
           <span className="logo">PLC</span>
@@ -163,6 +178,10 @@ export function App() {
         </nav>
 
         <div className="sidebar-foot">
+          <div className="game-mini">
+            <span className="game-mini-rank">{rankForXp(game.progress.xp)}</span>
+            <span className="game-mini-xp mono">{game.progress.xp} XP</span>
+          </div>
           <div className={`run-status ${running ? 'running' : ''}`}>
             <span className={`dot ${running ? 'on' : ''}`} />
             <div>
@@ -173,14 +192,15 @@ export function App() {
         </div>
       </aside>
 
-      {explorerOpen && (
+      {explorerOpen && !inArena && (
         <aside className="explorer-pane">
           <Explorer />
         </aside>
       )}
 
       <div className="main">
-        <header className="topbar">
+        {!inArena && (
+          <header className="topbar">
           <button className="hamburger" onClick={() => setNavOpen((v) => !v)} title="Menu">
             <Icon name="chevron" />
           </button>
@@ -297,9 +317,11 @@ export function App() {
             )}
           </div>
         </header>
+        )}
 
-        <main className="content">
+        <main className={`content ${inArena ? 'content-arena' : ''}`}>
           {ui.activeTab === 'home' && <HomeView onNewProject={() => setNewOpen(true)} />}
+          {ui.activeTab === 'game' && (gameRun ? <GameArena /> : <GameBoard />)}
           {ui.activeTab === 'ladder' && <LadderEditor />}
           {ui.activeTab === 'st' && <StEditor />}
           {ui.activeTab === 'tags' && <TagEditor />}
@@ -314,6 +336,19 @@ export function App() {
       {navOpen && <div className="nav-scrim" onClick={() => setNavOpen(false)} />}
 
       {ui.message && <div className="toast">{ui.message}</div>}
+
+      <div className="notifications">
+        {game.notifications.map((n) => (
+          <div
+            key={n.id}
+            className={`notification ${n.kind}`}
+            onClick={() => game.dismissNotification(n.id)}
+          >
+            <div className="notification-title">{n.title}</div>
+            <div className="notification-detail">{n.detail}</div>
+          </div>
+        ))}
+      </div>
 
       <NewProjectDialog open={newOpen} onClose={() => setNewOpen(false)} />
     </div>
