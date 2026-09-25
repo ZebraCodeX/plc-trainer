@@ -25,14 +25,14 @@ export function LadderSymbol({ op, hot = false, bit = false }: Props) {
   if (isContact(u)) {
     const conducting = u === 'XIC' ? bit : u === 'XIO' ? !bit : bit;
     return (
-      <svg width="64" height="26" viewBox="0 0 64 26" className="sym">
-        <line x1="0" y1="13" x2="64" y2="13" stroke={conducting ? body : 'transparent'} strokeWidth="2.4" />
-        <line x1="0" y1="13" x2="14" y2="13" stroke={wire} strokeWidth="2" />
-        <line x1="50" y1="13" x2="64" y2="13" stroke={wire} strokeWidth="2" />
-        <line x1="14" y1="4" x2="14" y2="22" stroke={body} strokeWidth="2.4" />
-        <line x1="50" y1="4" x2="50" y2="22" stroke={body} strokeWidth="2.4" />
-        {u === 'XIO' && <line x1="58" y1="19" x2="64" y2="7" stroke={body} strokeWidth="2" />}
-        {u === 'ONS' && <path d="M44 16 L50 8 L56 16" fill="none" stroke={body} strokeWidth="1.6" />}
+      <svg width="52" height="26" viewBox="0 0 52 26" className="sym">
+        <line x1="0" y1="13" x2="52" y2="13" stroke={conducting ? body : 'transparent'} strokeWidth="2.4" />
+        <line x1="0" y1="13" x2="12" y2="13" stroke={wire} strokeWidth="2" />
+        <line x1="40" y1="13" x2="52" y2="13" stroke={wire} strokeWidth="2" />
+        <line x1="12" y1="4" x2="12" y2="22" stroke={body} strokeWidth="2.4" />
+        <line x1="40" y1="4" x2="40" y2="22" stroke={body} strokeWidth="2.4" />
+        {u === 'XIO' && <line x1="46" y1="19" x2="52" y2="7" stroke={body} strokeWidth="2" />}
+        {u === 'ONS' && <path d="M37 16 L43 8 L49 16" fill="none" stroke={body} strokeWidth="1.6" />}
       </svg>
     );
   }
@@ -40,13 +40,13 @@ export function LadderSymbol({ op, hot = false, bit = false }: Props) {
   if (isCoil(u)) {
     const letter = u === 'OTL' ? 'L' : u === 'OTU' ? 'U' : '';
     return (
-      <svg width="64" height="26" viewBox="0 0 64 26" className="sym">
-        <line x1="0" y1="13" x2="20" y2="13" stroke={wire} strokeWidth="2" />
-        <line x1="44" y1="13" x2="64" y2="13" stroke={wire} strokeWidth="2" />
-        <path d="M20 4 Q30 13 20 22" fill="none" stroke={body} strokeWidth="2.4" />
-        <path d="M44 4 Q34 13 44 22" fill="none" stroke={body} strokeWidth="2.4" />
+      <svg width="52" height="26" viewBox="0 0 52 26" className="sym">
+        <line x1="0" y1="13" x2="16" y2="13" stroke={wire} strokeWidth="2" />
+        <line x1="36" y1="13" x2="52" y2="13" stroke={wire} strokeWidth="2" />
+        <path d="M16 4 Q26 13 16 22" fill="none" stroke={body} strokeWidth="2.4" />
+        <path d="M36 4 Q26 13 36 22" fill="none" stroke={body} strokeWidth="2.4" />
         {letter && (
-          <text x="32" y="18" fontSize="12" fontWeight="700" fill={body} textAnchor="middle">
+          <text x="26" y="19" fontSize="14" fontWeight="700" fill={body} textAnchor="middle">
             {letter}
           </text>
         )}
@@ -54,21 +54,22 @@ export function LadderSymbol({ op, hot = false, bit = false }: Props) {
     );
   }
 
+  const label = glyph(u);
   return (
-    <svg width="72" height="26" viewBox="0 0 72 26" className="sym">
-      <line x1="0" y1="13" x2="10" y2="13" stroke={wire} strokeWidth="2" />
-      <line x1="62" y1="13" x2="72" y2="13" stroke={wire} strokeWidth="2" />
-      <rect x="10" y="3" width="52" height="20" rx="2" fill="#10161f" stroke={body} strokeWidth="1.4" />
+    <svg width="52" height="26" viewBox="0 0 52 26" className="sym">
+      <line x1="0" y1="13" x2="7" y2="13" stroke={wire} strokeWidth="2" />
+      <line x1="45" y1="13" x2="52" y2="13" stroke={wire} strokeWidth="2" />
+      <rect x="7" y="3" width="38" height="20" rx="2" fill="#10161f" stroke={body} strokeWidth="1.4" />
       <text
-        x="36"
-        y="17"
-        fontSize="12"
-        fontWeight="600"
+        x="26"
+        y="19"
+        fontSize="15"
+        fontWeight="700"
         fill={body}
         textAnchor="middle"
         fontFamily="var(--mono)"
       >
-        {glyph(u)}
+        {label}
       </text>
     </svg>
   );

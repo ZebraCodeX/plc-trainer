@@ -2803,8 +2803,12 @@ td.mono,
 }
 
 .palette-panel .rung-chip svg {
-  width: 56px;
-  height: 24px;
+  width: auto;
+  height: 22px;
+}
+
+.palette-panel .rung-chip {
+  padding: 1px 2px;
 }
 
 .placing {
