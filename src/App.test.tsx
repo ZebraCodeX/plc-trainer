@@ -142,4 +142,31 @@ describe('App shell', () => {
     const after = document.querySelectorAll('.rung').length;
     expect(after).toBe(before + 1);
   });
+
+  it('shows the I/O panel with a program column', async () => {
+    await registerUser('iopanel', 'pw12', 'Io');
+    await signInThroughUi('iopanel', 'pw12');
+    fireEvent.click(screen.getByRole('button', { name: 'I/O Configuration' }));
+    expect(screen.getByText('Chassis I/O Configuration')).toBeTruthy();
+    expect(screen.getByText('Simulated I/O Panel')).toBeTruthy();
+    expect(screen.getAllByRole('columnheader', { name: 'Program' }).length).toBeGreaterThan(0);
+    expect(document.querySelectorAll('.io-toggle').length).toBeGreaterThan(0);
+  });
+
+  it('renders the plant simulation with a 3D visual', async () => {
+    await registerUser('plant', 'pw12', 'Plant');
+    await signInThroughUi('plant', 'pw12');
+    fireEvent.click(screen.getByRole('button', { name: 'Plant Simulation' }));
+    expect(screen.getByText('Components')).toBeTruthy();
+    expect(document.querySelectorAll('.pv3d-motor').length).toBeGreaterThan(0);
+  });
+
+  it('renders the HMI widget library', async () => {
+    await registerUser('hmi', 'pw12', 'Hmi');
+    await signInThroughUi('hmi', 'pw12');
+    fireEvent.click(screen.getByRole('button', { name: 'HMI / SCADA' }));
+    expect(screen.getByText('Widget Library')).toBeTruthy();
+    expect(screen.getByText('Tag list')).toBeTruthy();
+    expect(document.querySelectorAll('.hmi-lib-chip').length).toBeGreaterThan(4);
+  });
 });

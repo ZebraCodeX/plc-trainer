@@ -6,11 +6,14 @@ import type { ProcessComponent, ProcessType } from '../engine/model';
 import { makeComponent } from '../engine/factory';
 import { TagInput } from './TagInput';
 import { Guide } from './Guide';
+import { Icon } from './icons';
+import { ProcessVisual } from './ProcessVisual';
 
 const TYPE_LIST = Object.values(PROCESS_DEFS);
 
 export function PlantView() {
   const { project, applyEdit } = useStore();
+  const engine = useEngine();
   useScanCount();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -19,14 +22,25 @@ export function PlantView() {
 
   function addComponent(type: ProcessType, x: number, y: number) {
     const def = PROCESS_DEFS[type];
-    const comp = makeComponent(type, x, y, `${def.label} ${project.process.filter((c) => c.type === type).length + 1}`, {}, { ...def.defaults });
+    const comp = makeComponent(
+      type,
+      x,
+      y,
+      `${def.label} ${project.process.filter((c) => c.type === type).length + 1}`,
+      {},
+      { ...def.defaults },
+    );
     applyEdit((p) => {
       p.process.push(comp);
     }, 'content');
     setSelected(comp.id);
   }
 
-  function updateComponent(id: string, fn: (c: ProcessComponent) => void, kind: 'content' | 'structure' = 'content') {
+  function updateComponent(
+    id: string,
+    fn: (c: ProcessComponent) => void,
+    kind: 'content' | 'structure' = 'content',
+  ) {
     applyEdit((p) => {
       const c = p.process.find((x) => x.id === id);
       if (c) fn(c);
@@ -87,61 +101,64 @@ export function PlantView() {
   }
 
   const selectedComp = project.process.find((c) => c.id === selected);
+  const wiredCount = (c: ProcessComponent) =>
+    Object.values(c.bindings).filter((v) => v && v.trim()).length;
+  const terminalCount = (c: ProcessComponent) => PROCESS_DEFS[c.type].terminals.length;
+  const isFullyWired = (c: ProcessComponent) => wiredCount(c) === terminalCount(c);
 
   return (
     <div className="col">
       <div className="toolbar">
         <h3 style={{ margin: 0 }}>Plant Simulation</h3>
-        <span className="muted small">Drag a component onto the canvas, then wire its terminals to tags.</span>
+        <span className="muted small">
+          Drag a machine onto the canvas, then wire its terminals to the tags your program uses.
+        </span>
+        <span className="pill">
+          <span className={`dot ${project.process.length ? 'on' : ''}`} />
+          {project.process.filter(isFullyWired).length}/{project.process.length} wired
+        </span>
       </div>
 
       <Guide title="How the plant simulation works">
         <ul className="bullets">
           <li>
-            Drag a machine from <b>Components</b> onto the canvas (or click to place it), then drag
-            the item to move it.
+            Drag a machine from <b>Components</b> onto the canvas, then drag it to reposition.
           </li>
           <li>
-            Select a component to open the <b>Wiring</b> panel. Each terminal is either <b>IN</b>{' '}
-            (PLC drives the machine, e.g. Motor_Cmd) or <b>OUT</b> (the machine drives a tag the PLC
-            reads, e.g. Motor_Running).
+            Each terminal is <b>IN</b> (the program drives the machine, e.g. Motor_Cmd) or{' '}
+            <b>OUT</b> (the machine feeds a tag your program reads, e.g. Motor_Running). A green dot
+            means the terminal is wired.
           </li>
           <li>
-            Bind terminals to tags from your Tag Database or I/O config. The machine then behaves
-            physically — the motor ramps up, the tank fills and drains, the heater warms up.
+            Bind every terminal so the simulation matches reality. Machines animate in 3D and react
+            to the live tag values.
           </li>
-          <li>
-            <b>Parameters</b> tune the behaviour (speed, rates, delays). The <b>Sensor</b> component
-            has a slider so you can inject a value like temperature or level.
-          </li>
-          <li>Run the PLC (▶ in the header) to see everything animate live.</li>
+          <li>Press Run (▶ in the header) to watch the plant respond to your logic.</li>
         </ul>
       </Guide>
 
-      <div className="flex" style={{ alignItems: 'flex-start' }}>
-        <div className="panel" style={{ width: 220 }}>
+      <div className="plant-layout">
+        <div className="panel plant-palette">
           <h3>Components</h3>
-          <div className="row">
+          <div className="plant-palette-grid">
             {TYPE_LIST.map((def) => (
               <div
                 key={def.type}
-                className="chip"
+                className="plant-chip"
                 draggable
                 title={`Drag ${def.label} onto the canvas`}
                 onDragStart={(e) => e.dataTransfer.setData('text/plant', def.type)}
                 onClick={() => addComponent(def.type, 40, 40)}
               >
-                {def.label}
+                <ProcessVisual comp={makeComponent(def.type, 0, 0, '', {}, def.defaults)} />
+                <span>{def.label}</span>
               </div>
             ))}
-          </div>
-          <div className="muted small" style={{ marginTop: 8 }}>
-            Click to place at top-left, or drag onto the canvas.
           </div>
         </div>
 
         <div
-          className="canvas grow"
+          className="canvas plant-canvas grow"
           ref={canvasRef}
           onDragOver={(e) => e.preventDefault()}
           onDrop={onCanvasDrop}
@@ -152,18 +169,26 @@ export function PlantView() {
         >
           {project.process.map((comp) => {
             const pos = dragging?.id === comp.id ? dragging : comp;
+            const wired = isFullyWired(comp);
             return (
               <div
                 key={comp.id}
-                className={`canvas-item ${selected === comp.id ? 'selected' : ''}`}
+                className={`canvas-item pv-card ${selected === comp.id ? 'selected' : ''} ${
+                  wired ? 'wired' : 'unwired'
+                }`}
                 style={{ left: pos.x, top: pos.y, cursor: 'move' }}
                 onMouseDown={(e) => onItemMouseDown(e, comp)}
               >
-                <div className="row" style={{ justifyContent: 'space-between' }}>
+                <div className="pv-card-head">
                   <b className="small">{comp.label}</b>
-                  <span className="badge">{PROCESS_DEFS[comp.type].label}</span>
+                  <span
+                    className={`pv-wire-badge ${wired ? 'ok' : ''}`}
+                    title={`${wiredCount(comp)}/${terminalCount(comp)} terminals wired`}
+                  >
+                    {wired ? '● wired' : `○ ${wiredCount(comp)}/${terminalCount(comp)}`}
+                  </span>
                 </div>
-                <ComponentVisual comp={comp} />
+                <ProcessVisual comp={comp} />
               </div>
             );
           })}
@@ -175,11 +200,11 @@ export function PlantView() {
         </div>
 
         {selectedComp && (
-          <div className="panel" style={{ width: 320 }}>
+          <div className="panel plant-inspector">
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <h3 style={{ margin: 0 }}>Wiring</h3>
               <button className="danger" onClick={() => deleteComponent(selectedComp.id)}>
-                Delete
+                <Icon name="trash" size={13} /> Delete
               </button>
             </div>
             <label className="col" style={{ gap: 3, marginTop: 8 }}>
@@ -196,6 +221,10 @@ export function PlantView() {
                 key={term.key}
                 term={term}
                 value={selectedComp.bindings[term.key] ?? ''}
+                connected={
+                  Boolean(selectedComp.bindings[term.key]) &&
+                  engine.db.readScalar(selectedComp.bindings[term.key]) !== undefined
+                }
                 onChange={(v) =>
                   updateComponent(selectedComp.id, (c) => {
                     if (v) c.bindings[term.key] = v;
@@ -230,175 +259,25 @@ export function PlantView() {
 function TerminalRow({
   term,
   value,
+  connected,
   onChange,
 }: {
   term: TerminalDef;
   value: string;
+  connected: boolean;
   onChange: (v: string) => void;
 }) {
   return (
     <div className="terminal">
       <span
-        className="badge"
-        style={{ minWidth: 30, textAlign: 'center', background: term.dir === 'in' ? '#1c3b57' : '#2d3b23' }}
-        title={term.dir === 'in' ? 'PLC → Component' : 'Component → PLC'}
+        className={`term-badge ${term.dir}`}
+        title={term.dir === 'in' ? 'Program → Machine' : 'Machine → Program'}
       >
         {term.dir === 'in' ? 'IN' : 'OUT'}
       </span>
-      <span className="muted small" style={{ width: 96 }}>
-        {term.label}
-      </span>
-      <TagInput value={value} onChange={onChange} width={130} placeholder="tag" />
+      <span className="muted small term-label">{term.label}</span>
+      <TagInput value={value} onChange={onChange} width={120} placeholder="tag" />
+      <span className={`term-dot ${connected ? 'on' : ''}`} title={connected ? 'Connected' : 'No tag'} />
     </div>
   );
-}
-
-function ComponentVisual({ comp }: { comp: ProcessComponent }) {
-  const engine = useEngine();
-  useScanCount();
-  const state = engine.getProcessState(comp.id) ?? {};
-  const read = (key: string) => {
-    const ref = comp.bindings[key];
-    return ref ? engine.db.readScalar(ref) : undefined;
-  };
-  const bool = (key: string) => read(key) === true;
-  const num = (key: string) => {
-    const v = read(key);
-    return typeof v === 'number' ? v : 0;
-  };
-
-  switch (comp.type) {
-    case 'motor': {
-      const running = bool('run');
-      const rpm = num('speed');
-      return (
-        <div className="row" style={{ gap: 8 }}>
-          <span className={`lamp ${running ? 'on' : ''}`} />
-          <span className="mono small">{rpm.toFixed(0)} RPM</span>
-          <span
-            style={{
-              display: 'inline-block',
-              animation: running ? 'spin 1s linear infinite' : 'none',
-              fontSize: 16,
-            }}
-          >
-            ⚙
-          </span>
-        </div>
-      );
-    }
-    case 'conveyor': {
-      const moving = bool('run');
-      return (
-        <div className="row">
-          <span className="mono small" style={{ letterSpacing: 2 }}>
-            {moving ? '▶▶▶▶▶' : '▷▷▷▷▷'}
-          </span>
-          <span className="badge">box={bool('boxSensor') ? 1 : 0}</span>
-        </div>
-      );
-    }
-    case 'tank': {
-      const level = num('level');
-      const color = bool('high') ? 'var(--red)' : bool('low') ? 'var(--amber)' : '#2b7fbf';
-      return (
-        <div className="row">
-          <div
-            style={{
-              width: 34,
-              height: 56,
-              border: '2px solid var(--border)',
-              borderRadius: 3,
-              display: 'flex',
-              alignItems: 'flex-end',
-              background: '#0b0f14',
-              overflow: 'hidden',
-            }}
-          >
-            <div style={{ width: '100%', height: `${level}%`, background: color }} />
-          </div>
-          <div className="col" style={{ gap: 2 }}>
-            <span className="mono small">{level.toFixed(0)}%</span>
-            {bool('high') && <span className="badge" style={{ color: 'var(--red)' }}>HIGH</span>}
-            {bool('low') && <span className="badge" style={{ color: 'var(--amber)' }}>LOW</span>}
-          </div>
-        </div>
-      );
-    }
-    case 'valve': {
-      const opened = bool('opened');
-      const closed = bool('closed');
-      const color = opened ? 'var(--green)' : closed ? 'var(--red)' : 'var(--amber)';
-      return (
-        <div className="row">
-          <span className="mono" style={{ color, fontSize: 18 }}>
-            {opened ? '◀▶' : closed ? '▶◀' : '◆'}
-          </span>
-          <span className="mono small">{opened ? 'OPEN' : closed ? 'CLOSED' : 'MOVING'}</span>
-        </div>
-      );
-    }
-    case 'pump': {
-      const running = bool('running');
-      return (
-        <div className="row">
-          <span
-            style={{ display: 'inline-block', animation: running ? 'spin 0.7s linear infinite' : 'none' }}
-          >
-            ✳
-          </span>
-          <span className="mono small">{num('flow').toFixed(1)} L/s</span>
-        </div>
-      );
-    }
-    case 'trafficLight': {
-      return (
-        <div className="col" style={{ gap: 3, alignItems: 'center' }}>
-          <span className={`lamp red ${bool('red') ? 'on' : ''}`} />
-          <span className={`lamp amber ${bool('yellow') ? 'on' : ''}`} />
-          <span className={`lamp ${bool('green') ? 'on' : ''}`} />
-        </div>
-      );
-    }
-    case 'heater': {
-      return (
-        <div className="row">
-          <span className={`lamp red ${bool('heaterOn') ? 'on' : ''}`} />
-          <span className="mono small">{num('temp').toFixed(1)} °C</span>
-        </div>
-      );
-    }
-    case 'fan': {
-      const running = bool('running');
-      return (
-        <div className="row">
-          <span style={{ display: 'inline-block', animation: running ? 'spin 0.6s linear infinite' : 'none' }}>
-            ✤
-          </span>
-          <span className="mono small">{num('airflow').toFixed(0)} CFM</span>
-        </div>
-      );
-    }
-    case 'sensor': {
-      const min = Number(comp.props.min ?? 0);
-      const max = Number(comp.props.max ?? 100);
-      const val = Number(state.value ?? 0);
-      return (
-        <label className="row" style={{ gap: 6 }}>
-          <input
-            type="range"
-            min={min}
-            max={max}
-            value={val}
-            onChange={(e) => engine.setProcessValue(comp.id, 'value', Number(e.target.value))}
-            style={{ width: 110 }}
-          />
-          <span className="mono small">{val}</span>
-        </label>
-      );
-    }
-    case 'counter': {
-      return <span className="mono" style={{ fontSize: 20, color: 'var(--amber)' }}>{num('value').toFixed(0)}</span>;
-    }
-  }
 }

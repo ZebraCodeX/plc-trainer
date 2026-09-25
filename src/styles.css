@@ -3205,3 +3205,1063 @@ body {
     font-size: 12px;
   }
 }
+
+/* ================================================================
+   I/O Configuration — live connection view
+   ================================================================ */
+
+.io-layout {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 1050px) {
+  .io-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.io-module {
+  margin-bottom: 10px;
+  background: var(--panel-2);
+}
+
+.badge.mod.DI { color: #7fd6ff; }
+.badge.mod.DO { color: #7ee2a5; }
+.badge.mod.AI { color: #ffd479; }
+.badge.mod.AO { color: #d3a4ff; }
+
+.io-table tr.used {
+  background: rgba(62, 166, 255, 0.05);
+}
+
+.io-used {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(53, 196, 107, 0.14);
+  border: 1px solid rgba(53, 196, 107, 0.4);
+  color: #7ee2a5;
+}
+
+.io-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.io-toggle.on {
+  background: rgba(53, 196, 107, 0.16);
+  border-color: rgba(53, 196, 107, 0.6);
+  color: #9ff0c0;
+}
+
+.io-toggle.output {
+  background: #161d26;
+}
+
+.io-toggle.output.on {
+  background: rgba(62, 166, 255, 0.14);
+  border-color: rgba(62, 166, 255, 0.6);
+  color: #bfe3ff;
+}
+
+.io-toggle-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3a4a5e;
+  flex: none;
+}
+
+.io-toggle.on .io-toggle-led {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+.io-toggle.output.on .io-toggle-led {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.io-toggle.compact {
+  padding: 2px 6px;
+}
+
+.io-force {
+  margin-left: 2px;
+  padding: 0 5px;
+  font-size: 9px;
+  background: #0d1219;
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+.io-force:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.io-analog {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.io-analog.output {
+  background: #161d26;
+  border-color: rgba(62, 166, 255, 0.35);
+}
+
+.io-analog.compact {
+  padding: 2px 6px;
+}
+
+.io-bar {
+  display: inline-block;
+  width: 64px;
+  height: 9px;
+  background: #0b0f14;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.io-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #2b7fbf, #4fc3f7);
+  border-radius: 5px;
+}
+
+.io-panel-wrap {
+  position: sticky;
+  top: 0;
+}
+
+.io-group {
+  margin-top: 14px;
+}
+
+.io-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #a7b8cb;
+  margin-bottom: 8px;
+}
+
+.io-group-block {
+  margin-bottom: 10px;
+  padding-left: 4px;
+  border-left: 2px solid var(--border);
+}
+
+/* ================================================================
+   Plant Simulation — pseudo-3D machinery
+   ================================================================ */
+
+.plant-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 300px;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (max-width: 1250px) {
+  .plant-layout {
+    grid-template-columns: 200px 1fr;
+  }
+
+  .plant-inspector {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .plant-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.plant-palette-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.plant-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border-radius: 8px;
+  background: #111822;
+  border: 1px solid var(--border);
+  cursor: grab;
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.plant-chip:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.plant-chip:active {
+  cursor: grabbing;
+}
+
+.plant-chip .pv {
+  transform: scale(0.62);
+  transform-origin: center;
+  height: 66px;
+}
+
+.plant-canvas {
+  min-height: 560px;
+}
+
+.pv-card {
+  padding: 8px;
+  min-width: 150px;
+}
+
+.pv-card.unwired {
+  border-color: rgba(245, 179, 1, 0.45);
+}
+
+.pv-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.pv-wire-badge {
+  font-size: 9.5px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(245, 179, 1, 0.14);
+  border: 1px solid rgba(245, 179, 1, 0.4);
+  color: #ffd479;
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.pv-wire-badge.ok {
+  background: rgba(53, 196, 107, 0.14);
+  border-color: rgba(53, 196, 107, 0.4);
+  color: #7ee2a5;
+}
+
+.plant-inspector {
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.term-badge {
+  min-width: 34px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.term-badge.in {
+  background: rgba(62, 166, 255, 0.16);
+  border: 1px solid rgba(62, 166, 255, 0.4);
+  color: #9fd2ff;
+}
+
+.term-badge.out {
+  background: rgba(142, 203, 58, 0.16);
+  border: 1px solid rgba(142, 203, 58, 0.4);
+  color: #c3e88d;
+}
+
+.term-label {
+  width: 86px;
+  flex: none;
+}
+
+.term-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3a4a5e;
+  flex: none;
+}
+
+.term-dot.on {
+  background: var(--green);
+  box-shadow: 0 0 7px var(--green);
+}
+
+/* --- Shared pseudo-3D plant visuals --- */
+
+.pv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+}
+
+.pv-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pv-readout {
+  font-size: 12px;
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.pv-led {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #3a4a5e;
+}
+
+.pv-led.green {
+  background: var(--green);
+  box-shadow: 0 0 9px var(--green);
+}
+
+.pv-tag {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.pv-tag.red {
+  color: #ff8f8c;
+  border-color: rgba(239, 83, 80, 0.45);
+}
+
+.pv-tag.amber {
+  color: #ffd479;
+  border-color: rgba(245, 179, 1, 0.45);
+}
+
+/* Motor */
+.pv3d-motor {
+  position: relative;
+  width: 92px;
+  height: 60px;
+  perspective: 400px;
+}
+
+.pv3d-motor-body {
+  position: absolute;
+  inset: 6px 10px 14px 14px;
+  border-radius: 8px / 14px;
+  background: linear-gradient(160deg, #6b7d90, #2c3848 70%);
+  box-shadow: inset -6px -6px 12px rgba(0, 0, 0, 0.4), inset 6px 6px 10px rgba(255, 255, 255, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.pv3d-motor-fin {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.pv3d-motor-fin:nth-child(1) { left: 18%; }
+.pv3d-motor-fin:nth-child(2) { left: 48%; }
+.pv3d-motor-fin:nth-child(3) { left: 78%; }
+
+.pv3d-motor-cap {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 26px;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #8ea1b6, #3c4a5c);
+  box-shadow: -3px 0 6px rgba(0, 0, 0, 0.4);
+}
+
+.pv3d-motor-shaft {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  margin-top: -3px;
+  width: 14px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #9fb2c6, #5b6b7d);
+}
+
+.pv3d-motor-shaft.spin {
+  animation: pv-spin 0.6s linear infinite;
+}
+
+.pv3d-motor-base {
+  position: absolute;
+  left: 8px;
+  right: 4px;
+  bottom: 4px;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #3b4a5c, #1d2530);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+}
+
+.pv3d-motor-body.running {
+  background: linear-gradient(160deg, #7ee2a5, #2f7a52 70%);
+  box-shadow: 0 0 16px rgba(53, 196, 107, 0.5), inset -6px -6px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Pump */
+.pv3d-pump {
+  position: relative;
+  width: 78px;
+  height: 66px;
+}
+
+.pv3d-pump-volute {
+  position: absolute;
+  left: 12px;
+  top: 4px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #7d90a6, #263140 75%);
+  box-shadow: inset -5px -5px 10px rgba(0, 0, 0, 0.5), 0 7px 14px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pv3d-pump-impeller {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px dashed #9fb2c6;
+  opacity: 0.7;
+}
+
+.pv3d-pump.running .pv3d-pump-impeller {
+  animation: pv-spin 0.5s linear infinite;
+  border-color: #7ee2a5;
+}
+
+.pv3d-pump-inlet,
+.pv3d-pump-outlet {
+  position: absolute;
+  background: linear-gradient(180deg, #5b6b7d, #2c3848);
+  border-radius: 3px;
+}
+
+.pv3d-pump-inlet {
+  left: 0;
+  top: 26px;
+  width: 16px;
+  height: 10px;
+}
+
+.pv3d-pump-outlet {
+  left: 34px;
+  bottom: 0;
+  width: 10px;
+  height: 14px;
+}
+
+/* Fan */
+.pv3d-fan {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #2a3644, #131a23 75%);
+  border: 3px solid #3a4a5e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.6);
+}
+
+.pv3d-fan-blades {
+  position: absolute;
+  inset: 8px;
+}
+
+.pv3d-fan-blades span {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  margin-left: -4px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #8ea1b6, #44525f);
+}
+
+.pv3d-fan-blades span:nth-child(2) { transform: rotate(45deg); }
+.pv3d-fan-blades span:nth-child(3) { transform: rotate(90deg); }
+.pv3d-fan-blades span:nth-child(4) { transform: rotate(135deg); }
+
+.pv3d-fan-blades.spin-fast {
+  animation: pv-spin 0.35s linear infinite;
+}
+
+.pv3d-fan-hub {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #9fb2c6;
+  z-index: 1;
+}
+
+/* Conveyor */
+.pv3d-conveyor {
+  position: relative;
+  width: 150px;
+  height: 48px;
+}
+
+.pv3d-belt {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: #1b2530;
+  border: 2px solid #3a4a5e;
+  overflow: hidden;
+}
+
+.pv3d-belt-track {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(90deg, #44525f 0 6px, transparent 6px 14px);
+}
+
+.pv3d-belt-track.run {
+  animation: pv-belt 0.6s linear infinite;
+}
+
+.pv3d-box {
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  width: 14px;
+  height: 12px;
+  background: linear-gradient(160deg, #e0a458, #9c6a25);
+  border-radius: 2px;
+  animation: pv-box 2s linear infinite;
+}
+
+.pv3d-roller {
+  position: absolute;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #7d90a6, #263140);
+  border: 2px solid #44525f;
+}
+
+.pv3d-roller.left { left: 0; }
+.pv3d-roller.right { right: 0; }
+
+/* Tank */
+.pv3d-tank {
+  position: relative;
+  width: 96px;
+  height: 108px;
+}
+
+.pv3d-tank-shell {
+  position: absolute;
+  left: 18px;
+  top: 4px;
+  width: 60px;
+  height: 92px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(159, 178, 198, 0.28), rgba(159, 178, 198, 0.08));
+  border: 3px solid #7d90a6;
+  overflow: hidden;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.5);
+}
+
+.pv3d-tank-liquid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: height 0.18s linear;
+}
+
+.pv3d-tank-wave {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+}
+
+.pv3d-tank-high,
+.pv3d-tank-low {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.pv3d-tank-high { top: 18%; }
+.pv3d-tank-low { top: 78%; }
+
+.pv3d-pipe {
+  position: absolute;
+  width: 12px;
+  height: 22px;
+  background: linear-gradient(180deg, #5b6b7d, #2c3848);
+  border-radius: 3px;
+}
+
+.pv3d-pipe.in { left: 40px; top: -12px; }
+.pv3d-pipe.out { left: 40px; bottom: -10px; }
+
+.pv3d-pipe.flowing {
+  background: linear-gradient(180deg, #4fc3f7, #1c7fbf);
+  box-shadow: 0 0 10px rgba(79, 195, 247, 0.6);
+}
+
+.pv3d-tank-leg {
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 14px;
+  background: #3b4a5c;
+  border-radius: 2px;
+}
+
+.pv3d-tank-leg.left { left: 22px; }
+.pv3d-tank-leg.right { right: 22px; }
+
+/* Valve */
+.pv3d-valve {
+  position: relative;
+  width: 84px;
+  height: 48px;
+}
+
+.pv3d-valve-body {
+  position: absolute;
+  left: 30px;
+  top: 14px;
+  width: 24px;
+  height: 20px;
+  background: linear-gradient(160deg, #7d90a6, #2c3848);
+  border-radius: 4px;
+}
+
+.pv3d-valve-handle {
+  position: absolute;
+  left: 36px;
+  top: 0;
+  width: 12px;
+  height: 16px;
+  background: linear-gradient(160deg, #9fb2c6, #44525f);
+  border-radius: 3px;
+  transform-origin: bottom center;
+  transition: transform 0.3s ease;
+}
+
+.pv3d-valve.open .pv3d-valve-handle { transform: rotate(90deg); }
+.pv3d-valve.closed .pv3d-valve-handle { transform: rotate(0deg); }
+
+.pv3d-valve-pipe {
+  position: absolute;
+  top: 20px;
+  height: 10px;
+  width: 32px;
+  background: linear-gradient(180deg, #5b6b7d, #2c3848);
+  border-radius: 3px;
+}
+
+.pv3d-valve-pipe.left { left: 0; }
+.pv3d-valve-pipe.right { right: 0; }
+
+.pv3d-valve.open .pv3d-valve-pipe {
+  background: linear-gradient(180deg, #4fc3f7, #1c7fbf);
+}
+
+/* Traffic light */
+.pv3d-traffic {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  background: linear-gradient(160deg, #2a3644, #131a23);
+  border: 2px solid #3a4a5e;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.pv-lamp {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #22303f;
+  border: 2px solid #3a4a5e;
+}
+
+.pv-lamp.red.on { background: #ef5350; box-shadow: 0 0 12px #ef5350; }
+.pv-lamp.amber.on { background: #f5b301; box-shadow: 0 0 12px #f5b301; }
+.pv-lamp.green.on { background: #35c46b; box-shadow: 0 0 12px #35c46b; }
+
+/* Heater */
+.pv3d-heater {
+  position: relative;
+  width: 70px;
+  height: 84px;
+  background: linear-gradient(160deg, #2a3644, #131a23);
+  border: 2px solid #3a4a5e;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pv3d-heater-coils {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1;
+}
+
+.pv3d-heater-coils span {
+  display: block;
+  width: 40px;
+  height: 4px;
+  border-radius: 3px;
+  background: #44525f;
+}
+
+.pv3d-heater-coils span.hot {
+  background: #ff7a59;
+  box-shadow: 0 0 10px #ff7a59;
+  animation: pv-heat 1s ease-in-out infinite alternate;
+}
+
+.pv3d-heater-temp {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(239, 83, 80, 0.5), rgba(239, 83, 80, 0.1));
+}
+
+/* Sensor */
+.pv-sensor-arc {
+  position: relative;
+  width: 76px;
+  height: 40px;
+  border: 3px solid #3a4a5e;
+  border-bottom: none;
+  border-radius: 76px 76px 0 0;
+  overflow: hidden;
+}
+
+.pv-sensor-needle {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  height: 34px;
+  background: var(--accent);
+  transform-origin: bottom center;
+}
+
+.pv-slider {
+  width: 110px;
+}
+
+/* Counter / seven-segment */
+.pv-sevenseg {
+  font-size: 26px;
+  font-weight: 700;
+  color: #ff5252;
+  background: #0a0e13;
+  border: 2px solid #22303f;
+  border-radius: 6px;
+  padding: 4px 12px;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px rgba(255, 82, 82, 0.7);
+}
+
+@keyframes pv-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pv-belt {
+  to { background-position-x: 14px; }
+}
+
+@keyframes pv-box {
+  0% { left: -16px; }
+  100% { left: 130px; }
+}
+
+@keyframes pv-heat {
+  from { opacity: 0.65; }
+  to { opacity: 1; }
+}
+
+/* ================================================================
+   HMI / SCADA — builder
+   ================================================================ */
+
+.hmi-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 300px;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (max-width: 1250px) {
+  .hmi-layout {
+    grid-template-columns: 200px 1fr;
+  }
+
+  .hmi-inspector {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .hmi-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hmi-lib-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.hmi-lib-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px 6px;
+  border-radius: 8px;
+  background: #111822;
+  border: 1px solid var(--border);
+  cursor: grab;
+  text-align: center;
+}
+
+.hmi-lib-chip:hover {
+  border-color: var(--accent);
+}
+
+.hmi-lib-preview {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0.85);
+}
+
+.hmi-lib-name {
+  font-size: 11px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.hmi-lib-hint {
+  font-size: 9px;
+}
+
+.hmi-canvas {
+  min-height: 560px;
+}
+
+.hmi-canvas.grid-snap {
+  background-image:
+    radial-gradient(circle at 20% 20%, #1a2330, #0f1319 70%),
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: auto, 20px 20px, 20px 20px;
+}
+
+.hmi-inspector {
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.hmi-tag-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.hmi-tag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  text-align: left;
+  font-size: 12px;
+}
+
+.hmi-tag-row:hover {
+  border-color: var(--accent);
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  padding: 0;
+}
+
+.color-swatch.green { background: #35c46b; }
+.color-swatch.red { background: #ef5350; }
+.color-swatch.amber { background: #f5b301; }
+
+.color-swatch.active {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+.hmi-btn {
+  min-width: 70px;
+  padding: 6px 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 6px;
+}
+
+.hmi-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: #eaf5ff;
+}
+
+.hmi-preview-btn {
+  width: 54px;
+  height: 22px;
+  border-radius: 4px;
+  background: linear-gradient(160deg, #3a4a5e, #1d2530);
+  border: 1px solid #4a5a6e;
+}
+
+.hmi-static {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.lamp.large {
+  width: 30px;
+  height: 30px;
+}
+
+.gauge {
+  width: 84px;
+  height: 48px;
+  border: 3px solid #3a4a5e;
+  border-bottom: none;
+  border-radius: 84px 84px 0 0;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 100%, #1a2330, #0d1219 70%);
+}
+
+.gauge-ticks {
+  position: absolute;
+  inset: 0;
+  background:
+    conic-gradient(from 180deg at 50% 100%, transparent 0deg, transparent 8deg, #44525f 8deg, #44525f 10deg, transparent 10deg 30deg, #44525f 30deg, #44525f 32deg, transparent 32deg 60deg, #44525f 60deg, #44525f 62deg, transparent 62deg 90deg, #44525f 90deg, #44525f 92deg, transparent 92deg 120deg, #44525f 120deg, #44525f 122deg, transparent 122deg 150deg, #44525f 150deg, #44525f 152deg, transparent 152deg 180deg);
+  opacity: 0.5;
+}
+
+.gauge .needle {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  height: 40px;
+  background: var(--accent);
+  transform-origin: bottom center;
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.gauge-value {
+  position: absolute;
+  bottom: 2px;
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: var(--amber);
+}
+
+.hmi-bar {
+  width: 90%;
+  height: 14px;
+  background: #0b0f14;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid #22303f;
+}
+
+.hmi-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2b7fbf, #4fc3f7);
+  border-radius: 7px;
+  transition: width 0.15s linear;
+}

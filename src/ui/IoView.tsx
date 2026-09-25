@@ -1,21 +1,54 @@
+import { useMemo } from 'react';
 import { useStore } from '../store/store';
-import { useScanCount } from '../store/hooks';
+import { useEngine, useScanCount } from '../store/hooks';
 import { MODULE_CATALOG, getCatalog, makeModule, scaleEngToRaw } from '../engine/io';
 import { makeTag } from '../engine/factory';
 import type { DataType } from '../engine/types';
-import type { IoModule, ModuleKind } from '../engine/model';
+import type { IoModule, ModuleKind, Project } from '../engine/model';
 import { EditableTagValue } from './TagInput';
 import { Guide } from './Guide';
+import { Icon } from './icons';
+import type { PlcEngine } from '../engine/engine';
 
 function dataTypeForKind(kind: ModuleKind): DataType {
   return kind === 'DI' || kind === 'DO' ? 'BOOL' : 'REAL';
 }
 
+/** Collect every tag name the program's ladder/ST logic references. */
+function collectUsedTags(project: Project): Set<string> {
+  const used = new Set<string>();
+  const re = /[A-Za-z_][A-Za-z0-9_]*(?:\[[A-Za-z0-9_]+\])?(?:\.[A-Za-z]+)?/g;
+  const add = (text: string) => {
+    for (const m of text.match(re) ?? []) {
+      const base = m.split(/[[.]/)[0];
+      used.add(base.toUpperCase());
+    }
+  };
+  for (const program of project.programs) {
+    for (const routine of program.routines) {
+      if (routine.type === 'st') add(routine.stSource);
+      for (const rung of routine.rungs) {
+        const walk = (b: { items: any[] }) => {
+          for (const item of b.items) {
+            if (item.type === 'group') (item.branches ?? []).forEach(walk);
+            else (item.operands ?? []).forEach((o: string) => add(o));
+          }
+        };
+        walk(rung.condition);
+        for (const o of rung.outputs) o.operands.forEach((x) => add(x));
+      }
+    }
+  }
+  return used;
+}
+
 export function IoView() {
   const { project, applyEdit } = useStore();
+  const engine = useEngine();
   useScanCount();
 
   const modules = [...project.io.modules].sort((a, b) => a.slot - b.slot);
+  const usedTags = useMemo(() => collectUsedTags(project), [project]);
 
   function addModule(catalog: string) {
     const slot = modules.length ? Math.max(...modules.map((m) => m.slot)) + 1 : 1;
@@ -59,30 +92,34 @@ export function IoView() {
     }, 'structure');
   }
 
+  const inputModules = modules.filter((m) => m.kind === 'DI' || m.kind === 'AI');
+  const outputModules = modules.filter((m) => m.kind === 'DO' || m.kind === 'AO');
+
   return (
     <div className="col">
       <Guide title="How I/O configuration works" defaultOpen>
         <ul className="bullets">
           <li>
             A real PLC has a <b>chassis</b> with cards in numbered <b>slots</b>. Add modules with the
-            buttons above — each one creates BOOL (digital) or REAL (analog) tags automatically.
+            buttons above — each creates BOOL (digital) or REAL (analog) tags automatically.
           </li>
           <li>
-            <b>1756-IB16</b> / <b>OB16E</b> are 16-point digital input / output cards.{' '}
-            <b>IF8</b> / <b>OF8</b> are 8-channel analog cards.
+            Rename any channel to a tag your program uses (e.g. <span className="mono">Start_PB</span>).
+            The <b>Program</b> column shows whether the running logic reads or drives it.
           </li>
           <li>
-            Click a channel tag name to rename it (this renames the tag everywhere). Use the{' '}
-            <b>Simulated I/O Panel</b> to flip inputs and watch outputs react.
+            <b>Inputs</b> (DI / AI) are things you change by hand: click a digital input to toggle it,
+            or drag an analog slider. <b>Outputs</b> (DO / AO) show what the program is driving — you
+            can also <b>force</b> them for testing.
           </li>
           <li>
-            Analog scaling maps raw counts (0–32767) to engineering units (e.g. 0–100%). The slider
-            works in engineering units and shows the raw value beside it.
+            Press <b>Run</b> in the header so the scan updates the outputs live.
           </li>
         </ul>
       </Guide>
-      <div className="flex" style={{ alignItems: 'flex-start' }}>
-        <div className="panel grow">
+
+      <div className="io-layout">
+        <div className="panel">
           <h3>Chassis I/O Configuration</h3>
           <div className="toolbar">
             {MODULE_CATALOG.map((c) => (
@@ -99,10 +136,10 @@ export function IoView() {
           {modules.map((m) => {
             const entry = getCatalog(m.catalog);
             return (
-              <div key={m.id} className="panel" style={{ marginBottom: 8, background: 'var(--panel-2)' }}>
+              <div key={m.id} className="panel io-module">
                 <div className="row" style={{ justifyContent: 'space-between' }}>
                   <div className="row">
-                    <span className="badge">{m.catalog}</span>
+                    <span className={`badge mod ${m.kind}`}>{m.catalog}</span>
                     <span className="muted small">{entry?.description}</span>
                     <label className="pill">
                       Slot
@@ -117,9 +154,10 @@ export function IoView() {
                     </label>
                   </div>
                   <button className="danger" onClick={() => removeModule(m.id)}>
-                    Remove
+                    <Icon name="trash" size={13} /> Remove
                   </button>
                 </div>
+
                 {(m.kind === 'AI' || m.kind === 'AO') && (
                   <div className="row small" style={{ marginTop: 6 }}>
                     <span className="muted">Scaling:</span>
@@ -155,30 +193,46 @@ export function IoView() {
                     </label>
                   </div>
                 )}
-                <table style={{ marginTop: 6 }}>
+
+                <table className="io-table" style={{ marginTop: 8 }}>
                   <thead>
                     <tr>
                       <th>Ch</th>
                       <th>Tag</th>
+                      <th>Program</th>
                       <th>Live</th>
+                      <th>Test</th>
                     </tr>
                   </thead>
                   <tbody>
                     {m.channels.map((ch) => {
                       const tag = project.tags.find((t) => t.name === ch.tagName);
+                      const used = usedTags.has(ch.tagName.toUpperCase());
                       return (
-                        <tr key={ch.channel}>
+                        <tr key={ch.channel} className={used ? 'used' : ''}>
                           <td className="mono">{ch.channel}</td>
                           <td>
                             <input
                               className="mono"
-                              style={{ width: 170 }}
+                              style={{ width: 150 }}
                               value={ch.tagName}
                               onChange={(e) => renameChannel(m.id, ch.channel, e.target.value)}
                             />
                           </td>
+                          <td>
+                            {used ? (
+                              <span className="io-used" title="Referenced by the program logic">
+                                <Icon name="play" size={11} /> used
+                              </span>
+                            ) : (
+                              <span className="muted small">—</span>
+                            )}
+                          </td>
                           <td className="mono">
                             <EditableTagValue refName={ch.tagName} tag={tag} />
+                          </td>
+                          <td>
+                            <IoChannelControl module={m} channel={ch.channel} tagName={ch.tagName} engine={engine} compact />
                           </td>
                         </tr>
                       );
@@ -190,34 +244,76 @@ export function IoView() {
           })}
         </div>
 
-        <div className="panel grow">
+        <div className="panel io-panel-wrap">
           <h3>Simulated I/O Panel</h3>
           <span className="muted small">
-            Toggle inputs and watch outputs. These write to the physical I/O tags the program scans.
+            Drive the inputs by hand and watch the program respond on the outputs.
           </span>
-          <div style={{ marginTop: 10 }}>
-            {modules.map((m) => (
-              <div key={m.id} style={{ marginBottom: 10 }}>
-                <div className="muted small">
-                  {m.catalog} · slot {m.slot}
-                </div>
-                <div className="row">
-                  {m.channels.map((ch) => (
-                    <IoChannelControl key={ch.channel} module={m} channel={ch.channel} tagName={ch.tagName} />
-                  ))}
-                </div>
+
+          {modules.length === 0 && (
+            <div className="muted small" style={{ marginTop: 10 }}>
+              Add modules on the left to begin.
+            </div>
+          )}
+
+          {inputModules.length > 0 && (
+            <div className="io-group">
+              <div className="io-group-title">
+                <span className="lamp on" /> Inputs
               </div>
-            ))}
-            {modules.length === 0 && <div className="muted small">Add modules on the left.</div>}
-          </div>
+              {inputModules.map((m) => (
+                <div key={m.id} className="io-group-block">
+                  <div className="muted small">
+                    {m.catalog} · slot {m.slot}
+                  </div>
+                  <div className="row">
+                    {m.channels.map((ch) => (
+                      <IoChannelControl key={ch.channel} module={m} channel={ch.channel} tagName={ch.tagName} engine={engine} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {outputModules.length > 0 && (
+            <div className="io-group">
+              <div className="io-group-title">
+                <span className="lamp red" /> Outputs
+              </div>
+              {outputModules.map((m) => (
+                <div key={m.id} className="io-group-block">
+                  <div className="muted small">
+                    {m.catalog} · slot {m.slot}
+                  </div>
+                  <div className="row">
+                    {m.channels.map((ch) => (
+                      <IoChannelControl key={ch.channel} module={m} channel={ch.channel} tagName={ch.tagName} engine={engine} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function IoChannelControl({ module, channel, tagName }: { module: IoModule; channel: number; tagName: string }) {
-  const { engine } = useStore();
+function IoChannelControl({
+  module,
+  channel,
+  tagName,
+  engine,
+  compact,
+}: {
+  module: IoModule;
+  channel: number;
+  tagName: string;
+  engine: PlcEngine;
+  compact?: boolean;
+}) {
   useScanCount();
   const value = engine.db.readScalar(tagName);
 
@@ -225,55 +321,64 @@ function IoChannelControl({ module, channel, tagName }: { module: IoModule; chan
     const on = value === true;
     return (
       <button
-        className={on ? 'primary' : ''}
+        className={`io-toggle ${on ? 'on' : ''} ${compact ? 'compact' : ''}`}
         title={`${tagName} — click to toggle`}
         onClick={() => engine.db.writeScalar(tagName, !on)}
       >
-        {channel}: {on ? 'ON' : 'OFF'}
+        <span className="io-toggle-led" />
+        {!compact && <span className="mono">{channel}</span>}
+        {!compact && <b>{on ? 'ON' : 'OFF'}</b>}
       </button>
     );
   }
+
   if (module.kind === 'DO') {
     const on = value === true;
     return (
-      <span className="pill">
-        <span className={`lamp ${on ? 'on' : ''}`} /> {channel}
+      <span className={`io-toggle output ${on ? 'on' : ''} ${compact ? 'compact' : ''}`} title={tagName}>
+        <span className="io-toggle-led" />
+        {!compact && <span className="mono">{channel}</span>}
+        <button
+          className="io-force"
+          title="Force this output on/off for testing"
+          onClick={(e) => {
+            e.stopPropagation();
+            engine.db.writeScalar(tagName, !on);
+          }}
+        >
+          {on ? 'OFF' : 'ON'}
+        </button>
       </span>
     );
   }
+
   if (module.kind === 'AI') {
     const eng = typeof value === 'number' ? value : 0;
     return (
-      <label className="pill" style={{ minWidth: 170 }}>
-        {channel}
+      <label className={`io-analog ${compact ? 'compact' : ''}`}>
+        <span className="mono">{channel}</span>
         <input
           type="range"
           min={module.engMin}
           max={module.engMax}
           value={eng}
           onChange={(e) => engine.db.writeScalar(tagName, Number(e.target.value))}
-          style={{ width: 90 }}
+          style={{ width: compact ? 70 : 90 }}
         />
         <span className="tag-value">{eng.toFixed(0)}</span>
-        <span className="muted small">({scaleEngToRaw(module, eng)})</span>
+        {!compact && <span className="muted small">({scaleEngToRaw(module, eng)})</span>}
       </label>
     );
   }
+
   const eng = typeof value === 'number' ? value : 0;
   const pct = ((eng - module.engMin) / (module.engMax - module.engMin || 1)) * 100;
+  const clamped = Math.max(0, Math.min(100, pct));
   return (
-    <span className="pill" style={{ minWidth: 150 }}>
-      {channel}
-      <span style={{ display: 'inline-block', width: 60, height: 8, background: '#0b0f14', borderRadius: 4 }}>
-        <span
-          style={{
-            display: 'block',
-            width: `${Math.max(0, Math.min(100, pct))}%`,
-            height: '100%',
-            background: 'var(--accent)',
-            borderRadius: 4,
-          }}
-        />
+    <span className={`io-analog output ${compact ? 'compact' : ''}`} title={tagName}>
+      <span className="mono">{channel}</span>
+      <span className="io-bar">
+        <span className="io-bar-fill" style={{ width: `${clamped}%` }} />
       </span>
       <span className="tag-value">{eng.toFixed(0)}</span>
     </span>

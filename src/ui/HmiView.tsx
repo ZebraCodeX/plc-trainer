@@ -3,18 +3,28 @@ import { useStore } from '../store/store';
 import { useScanCount, useTagValue } from '../store/hooks';
 import type { HmiWidget, HmiWidgetType } from '../engine/model';
 import { makeWidget } from '../engine/factory';
-import { TagInput } from './TagInput';
+import { TagInput, useTagNames } from './TagInput';
 import { Guide } from './Guide';
+import { Icon } from './icons';
 
-const WIDGET_TYPES: { type: HmiWidgetType; label: string }[] = [
-  { type: 'indicator', label: 'Indicator' },
-  { type: 'button', label: 'Momentary Button' },
-  { type: 'switch', label: 'Switch' },
-  { type: 'numeric', label: 'Numeric Display' },
-  { type: 'gauge', label: 'Gauge' },
-  { type: 'bar', label: 'Bar' },
-  { type: 'trend', label: 'Trend Chart' },
-  { type: 'label', label: 'Label' },
+interface WidgetDef {
+  type: HmiWidgetType;
+  label: string;
+  hint: string;
+  w: number;
+  h: number;
+  needsNum: boolean;
+}
+
+const WIDGETS: WidgetDef[] = [
+  { type: 'indicator', label: 'Indicator', hint: 'BOOL lamp', w: 100, h: 76, needsNum: false },
+  { type: 'button', label: 'Momentary', hint: 'Press-and-hold', w: 120, h: 76, needsNum: false },
+  { type: 'switch', label: 'Switch', hint: 'Toggle BOOL', w: 120, h: 76, needsNum: false },
+  { type: 'numeric', label: 'Numeric', hint: 'Read a value', w: 130, h: 76, needsNum: true },
+  { type: 'gauge', label: 'Gauge', hint: 'Dial display', w: 130, h: 100, needsNum: true },
+  { type: 'bar', label: 'Bar', hint: 'Level bar', w: 150, h: 80, needsNum: true },
+  { type: 'trend', label: 'Trend', hint: 'Live chart', w: 220, h: 130, needsNum: true },
+  { type: 'label', label: 'Label', hint: 'Static text', w: 130, h: 48, needsNum: false },
 ];
 
 export function HmiView() {
@@ -23,9 +33,18 @@ export function HmiView() {
   const [selected, setSelected] = useState<string | null>(null);
   const dragRef = useRef<{ id: string; dx: number; dy: number } | null>(null);
   const [dragging, setDragging] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [snap, setSnap] = useState(true);
+  const tagNames = useTagNames();
 
   function addWidget(type: HmiWidgetType, x: number, y: number) {
-    const w = makeWidget(type, x, y, type === 'label' ? 'Label' : type);
+    const def = WIDGETS.find((d) => d.type === type)!;
+    const w = makeWidget(type, x, y, def.label === 'Momentary' ? 'Start' : def.label);
+    w.w = def.w;
+    w.h = def.h;
+    if (def.needsNum) {
+      w.props.min = 0;
+      w.props.max = 100;
+    }
     applyEdit((p) => {
       p.hmi.push(w);
     }, 'content');
@@ -39,12 +58,20 @@ export function HmiView() {
     }, 'content');
   }
 
+  function snapVal(v: number) {
+    return snap ? Math.round(v / 10) * 10 : Math.round(v);
+  }
+
   function onCanvasDrop(e: React.DragEvent) {
     e.preventDefault();
     const type = e.dataTransfer.getData('text/hmi') as HmiWidgetType;
     if (!type) return;
     const rect = canvasRef.current?.getBoundingClientRect();
-    addWidget(type, Math.max(0, e.clientX - (rect?.left ?? 0) - 40), Math.max(0, e.clientY - (rect?.top ?? 0) - 20));
+    addWidget(
+      type,
+      snapVal(Math.max(0, e.clientX - (rect?.left ?? 0) - 40)),
+      snapVal(Math.max(0, e.clientY - (rect?.top ?? 0) - 20)),
+    );
   }
 
   function onItemMouseDown(e: React.MouseEvent, w: HmiWidget) {
@@ -71,8 +98,8 @@ export function HmiView() {
     dragRef.current = null;
     if (drag && pos) {
       updateWidget(drag.id, (w) => {
-        w.x = Math.round(pos.x);
-        w.y = Math.round(pos.y);
+        w.x = snapVal(pos.x);
+        w.y = snapVal(pos.y);
       });
     }
     setDragging(null);
@@ -84,49 +111,62 @@ export function HmiView() {
     <div className="col">
       <div className="toolbar">
         <h3 style={{ margin: 0 }}>HMI / SCADA Dashboard</h3>
-        <span className="muted small">Drag widgets onto the screen and bind them to tags.</span>
+        <label className="pill" title="Snap widgets to a 10px grid">
+          <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />
+          Snap to grid
+        </label>
+        <span className="pill">
+          <span className={`dot ${project.hmi.length ? 'on' : ''}`} />
+          {project.hmi.length} widgets
+        </span>
+        <span className="muted small">Drag a widget onto the screen, then tag it.</span>
       </div>
 
       <Guide title="How the HMI works">
         <ul className="bullets">
           <li>
-            Drag a <b>widget</b> onto the screen, then select it to set its <b>label</b> and{' '}
-            <b>tag binding</b>.
+            Drag a <b>widget</b> from the library onto the screen. Select it to edit its label, tag
+            binding, size and range.
           </li>
           <li>
-            <b>Indicator</b> shows a BOOL as a lamp. <b>Momentary Button</b> forces a tag true while
-            held; <b>Switch</b> toggles it — perfect for Start/Stop and HMI inputs.
+            <b>Indicator</b> shows a BOOL as a lamp. <b>Momentary</b> forces a tag true while held;{' '}
+            <b>Switch</b> toggles it — ideal for Start/Stop.
           </li>
           <li>
-            <b>Numeric</b>, <b>Gauge</b> and <b>Bar</b> display numeric tags. Set min/max in the
-            binding’s props for gauges and bars.
+            <b>Numeric</b>, <b>Gauge</b> and <b>Bar</b> display numbers; set their <b>min/max</b> in
+            the inspector. <b>Trend</b> charts the value live.
           </li>
           <li>
-            <b>Trend</b> draws a live chart of the bound tag’s value over recent scans.
+            Use the <b>Tag list</b> on the right to click a tag straight onto the selected widget.
           </li>
-          <li>Move widgets by dragging; resize with the W/H fields. Everything binds to the same tag database.</li>
         </ul>
       </Guide>
-      <div className="flex" style={{ alignItems: 'flex-start' }}>
-        <div className="panel" style={{ width: 200 }}>
-          <h3>Widgets</h3>
-          <div className="row">
-            {WIDGET_TYPES.map((w) => (
+
+      <div className="hmi-layout">
+        <div className="panel hmi-library">
+          <h3>Widget Library</h3>
+          <div className="hmi-lib-grid">
+            {WIDGETS.map((d) => (
               <div
-                key={w.type}
-                className="chip"
+                key={d.type}
+                className="hmi-lib-chip"
                 draggable
-                onDragStart={(e) => e.dataTransfer.setData('text/hmi', w.type)}
-                onClick={() => addWidget(w.type, 40, 40)}
+                title={`Drag ${d.label} — ${d.hint}`}
+                onDragStart={(e) => e.dataTransfer.setData('text/hmi', d.type)}
+                onClick={() => addWidget(d.type, 40, 40)}
               >
-                {w.label}
+                <div className="hmi-lib-preview">
+                  <HmiWidgetVisual widget={makeWidget(d.type, 0, 0, d.label)} preview />
+                </div>
+                <span className="hmi-lib-name">{d.label}</span>
+                <span className="hmi-lib-hint muted small">{d.hint}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div
-          className="canvas grow"
+          className={`canvas hmi-canvas grow ${snap ? 'grid-snap' : ''}`}
           ref={canvasRef}
           onDragOver={(e) => e.preventDefault()}
           onDrop={onCanvasDrop}
@@ -151,95 +191,167 @@ export function HmiView() {
           })}
           {project.hmi.length === 0 && (
             <div className="empty-state" style={{ margin: 40 }}>
-              Drop widgets here to build an operator screen.
+              Drag widgets from the library to build an operator screen.
             </div>
           )}
         </div>
 
-        {selectedWidget && (
-          <div className="panel" style={{ width: 300 }}>
-            <div className="row" style={{ justifyContent: 'space-between' }}>
-              <h3 style={{ margin: 0 }}>Widget</h3>
-              <button
-                className="danger"
-                onClick={() => {
-                  applyEdit((p) => {
-                    p.hmi = p.hmi.filter((x) => x.id !== selectedWidget.id);
-                  }, 'content');
-                  setSelected(null);
-                }}
-              >
-                Delete
-              </button>
-            </div>
-            <label className="col" style={{ gap: 3, marginTop: 8 }}>
-              <span className="muted small">Label</span>
-              <input
-                value={selectedWidget.label}
-                onChange={(e) => updateWidget(selectedWidget.id, (w) => (w.label = e.target.value))}
-              />
-            </label>
-            <label className="col" style={{ gap: 3, marginTop: 8 }}>
-              <span className="muted small">Tag binding</span>
-              <TagInput
-                value={selectedWidget.binding ?? ''}
-                onChange={(v) => updateWidget(selectedWidget.id, (w) => (w.binding = v))}
-                width={200}
-              />
-            </label>
-            <div className="row" style={{ gap: 8, marginTop: 8 }}>
-              <label className="pill">
-                W
-                <input
-                  type="number"
-                  style={{ width: 60 }}
-                  value={selectedWidget.w}
-                  onChange={(e) => updateWidget(selectedWidget.id, (w) => (w.w = Number(e.target.value)))}
-                />
-              </label>
-              <label className="pill">
-                H
-                <input
-                  type="number"
-                  style={{ width: 60 }}
-                  value={selectedWidget.h}
-                  onChange={(e) => updateWidget(selectedWidget.id, (w) => (w.h = Number(e.target.value)))}
-                />
-              </label>
-              <label className="pill">
-                Color
-                <select
-                  value={String(selectedWidget.props.color ?? 'green')}
-                  onChange={(e) => updateWidget(selectedWidget.id, (w) => (w.props.color = e.target.value))}
+        <div className="panel hmi-inspector">
+          <div className="hmi-taglist">
+            <h3>Tag list</h3>
+            <span className="muted small">
+              {selectedWidget
+                ? 'Click a tag to bind it to the selected widget.'
+                : 'Select a widget on the canvas, then click a tag to bind it.'}
+            </span>
+            <div className="hmi-tag-rows">
+              {tagNames.map((name) => (
+                <button
+                  key={name}
+                  className="hmi-tag-row"
+                  disabled={!selectedWidget}
+                  onClick={() => {
+                    if (selectedWidget) updateWidget(selectedWidget.id, (w) => (w.binding = name));
+                  }}
                 >
-                  <option value="green">green</option>
-                  <option value="red">red</option>
-                  <option value="amber">amber</option>
-                </select>
-              </label>
+                  <span className="mono">{name}</span>
+                  <TagLive name={name} />
+                </button>
+              ))}
+              {tagNames.length === 0 && (
+                <div className="muted small">No tags yet — create some in the Tag Database.</div>
+              )}
             </div>
           </div>
-        )}
+
+          {selectedWidget && (
+            <div className="hmi-widget-editor">
+              <div className="row" style={{ justifyContent: 'space-between', marginTop: 14 }}>
+                <h3 style={{ margin: 0 }}>Widget</h3>
+                <button
+                  className="danger"
+                  onClick={() => {
+                    const id = selectedWidget.id;
+                    applyEdit((p) => {
+                      p.hmi = p.hmi.filter((x) => x.id !== id);
+                    }, 'content');
+                    setSelected(null);
+                  }}
+                >
+                  <Icon name="trash" size={13} /> Delete
+                </button>
+              </div>
+
+              <label className="col" style={{ gap: 3, marginTop: 8 }}>
+                <span className="muted small">Label</span>
+                <input
+                  value={selectedWidget.label}
+                  onChange={(e) => updateWidget(selectedWidget.id, (w) => (w.label = e.target.value))}
+                />
+              </label>
+
+              <label className="col" style={{ gap: 3, marginTop: 8 }}>
+                <span className="muted small">Tag binding</span>
+                <TagInput
+                  value={selectedWidget.binding ?? ''}
+                  onChange={(v) => updateWidget(selectedWidget.id, (w) => (w.binding = v))}
+                  width={180}
+                />
+              </label>
+
+              <div className="row" style={{ gap: 8, marginTop: 8 }}>
+                <label className="pill">
+                  W
+                  <input
+                    type="number"
+                    style={{ width: 56 }}
+                    value={selectedWidget.w}
+                    onChange={(e) => updateWidget(selectedWidget.id, (w) => (w.w = Number(e.target.value)))}
+                  />
+                </label>
+                <label className="pill">
+                  H
+                  <input
+                    type="number"
+                    style={{ width: 56 }}
+                    value={selectedWidget.h}
+                    onChange={(e) => updateWidget(selectedWidget.id, (w) => (w.h = Number(e.target.value)))}
+                  />
+                </label>
+              </div>
+
+              {['gauge', 'bar', 'trend'].includes(selectedWidget.type) && (
+                <div className="row" style={{ gap: 8, marginTop: 8 }}>
+                  <label className="pill">
+                    Min
+                    <input
+                      type="number"
+                      style={{ width: 56 }}
+                      value={Number(selectedWidget.props.min ?? 0)}
+                      onChange={(e) => updateWidget(selectedWidget.id, (w) => (w.props.min = Number(e.target.value)))}
+                    />
+                  </label>
+                  <label className="pill">
+                    Max
+                    <input
+                      type="number"
+                      style={{ width: 56 }}
+                      value={Number(selectedWidget.props.max ?? 100)}
+                      onChange={(e) => updateWidget(selectedWidget.id, (w) => (w.props.max = Number(e.target.value)))}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {['indicator', 'button', 'switch'].includes(selectedWidget.type) && (
+                <div className="row" style={{ gap: 8, marginTop: 8 }}>
+                  <span className="muted small">Colour</span>
+                  {['green', 'red', 'amber'].map((c) => (
+                    <button
+                      key={c}
+                      className={`color-swatch ${c} ${
+                        String(selectedWidget.props.color ?? 'green') === c ? 'active' : ''
+                      }`}
+                      title={c}
+                      onClick={() => updateWidget(selectedWidget.id, (w) => (w.props.color = c))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function HmiWidgetVisual({ widget }: { widget: HmiWidget }) {
+function TagLive({ name }: { name: string }) {
+  const v = useTagValue(name);
+  return (
+    <span className="tag-value">
+      {v === undefined ? '--' : typeof v === 'boolean' ? (v ? '1' : '0') : v}
+    </span>
+  );
+}
+
+function HmiWidgetVisual({ widget, preview }: { widget: HmiWidget; preview?: boolean }) {
   const { engine } = useStore();
   useScanCount();
-  const value = useTagValue(widget.binding);
+  const value = useTagValue(preview ? undefined : widget.binding);
   const on = value === true;
 
   switch (widget.type) {
     case 'indicator': {
       const color = String(widget.props.color ?? 'green');
-      return <span className={`lamp ${color} ${on ? 'on' : ''}`} />;
+      return <span className={`lamp large ${color} ${on ? 'on' : ''}`} />;
     }
     case 'button':
-      return (
+    case 'switch':
+      if (preview) return <span className={`hmi-preview-btn ${widget.type}`} />;
+      return widget.type === 'button' ? (
         <button
-          className={on ? 'primary' : ''}
+          className={`hmi-btn ${on ? 'active' : ''}`}
           onMouseDown={(e) => {
             e.stopPropagation();
             if (widget.binding) engine.db.writeScalar(widget.binding, true);
@@ -249,13 +361,11 @@ function HmiWidgetVisual({ widget }: { widget: HmiWidget }) {
             if (widget.binding) engine.db.writeScalar(widget.binding, false);
           }}
         >
-          {widget.label}
+          PRESS
         </button>
-      );
-    case 'switch':
-      return (
+      ) : (
         <button
-          className={on ? 'primary' : ''}
+          className={`hmi-btn ${on ? 'active' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
             if (widget.binding) engine.db.writeScalar(widget.binding, !on);
@@ -265,7 +375,11 @@ function HmiWidgetVisual({ widget }: { widget: HmiWidget }) {
         </button>
       );
     case 'numeric':
-      return <span className="value">{typeof value === 'number' ? value.toFixed(1) : on ? '1' : value === undefined ? '--' : '0'}</span>;
+      return (
+        <span className="value">
+          {typeof value === 'number' ? value.toFixed(1) : on ? '1' : value === undefined ? '--' : '0'}
+        </span>
+      );
     case 'gauge': {
       const v = typeof value === 'number' ? value : 0;
       const min = Number(widget.props.min ?? 0);
@@ -273,10 +387,9 @@ function HmiWidgetVisual({ widget }: { widget: HmiWidget }) {
       const angle = -90 + 180 * Math.max(0, Math.min(1, (v - min) / (max - min || 1)));
       return (
         <div className="gauge">
+          <div className="gauge-ticks" />
           <div className="needle" style={{ transform: `rotate(${angle}deg)` }} />
-          <span className="value" style={{ position: 'absolute', bottom: 2, width: '100%', textAlign: 'center', fontSize: 12 }}>
-            {v.toFixed(0)}
-          </span>
+          <span className="gauge-value mono">{v.toFixed(0)}</span>
         </div>
       );
     }
@@ -286,40 +399,46 @@ function HmiWidgetVisual({ widget }: { widget: HmiWidget }) {
       const max = Number(widget.props.max ?? 100);
       const pct = Math.max(0, Math.min(100, ((v - min) / (max - min || 1)) * 100));
       return (
-        <div style={{ width: '90%', height: 12, background: '#0b0f14', borderRadius: 6, marginTop: 6 }}>
-          <div style={{ width: `${pct}%`, height: '100%', background: 'var(--accent)', borderRadius: 6 }} />
+        <div className="hmi-bar">
+          <div className="hmi-bar-fill" style={{ width: `${pct}%` }} />
         </div>
       );
     }
     case 'trend':
-      return <Trend value={typeof value === 'number' ? value : on ? 1 : 0} />;
+      return <Trend value={typeof value === 'number' ? value : on ? 1 : 0} preview={preview} />;
     case 'label':
-      return <span className="small">{widget.label}</span>;
+      return <span className="hmi-static">{widget.label}</span>;
   }
 }
 
-function Trend({ value }: { value: number }) {
+function Trend({ value, preview }: { value: number; preview?: boolean }) {
   const scan = useScanCount();
   const dataRef = useRef<number[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastScan = useRef(-1);
 
   useEffect(() => {
+    if (preview) return;
     if (lastScan.current === scan) return;
     lastScan.current = scan;
     dataRef.current.push(value);
     if (dataRef.current.length > 120) dataRef.current.shift();
-  }, [scan, value]);
+  }, [scan, value, preview]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    let ctx: CanvasRenderingContext2D | null = null;
+    try {
+      ctx = canvas.getContext('2d');
+    } catch {
+      return; // canvas unavailable (e.g. headless test environment)
+    }
     if (!ctx) return;
     const w = (canvas.width = canvas.clientWidth || 160);
-    const h = (canvas.height = 80);
+    const h = (canvas.height = canvas.clientHeight || 60);
     ctx.clearRect(0, 0, w, h);
-    ctx.strokeStyle = '#2c3848';
+    ctx.strokeStyle = '#22303f';
     ctx.beginPath();
     ctx.moveTo(0, h / 2);
     ctx.lineTo(w, h / 2);
