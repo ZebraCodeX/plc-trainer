@@ -103,11 +103,14 @@ describe('App shell', () => {
     expect(screen.getAllByText('OTE').length).toBeGreaterThan(0);
   });
 
-  it('the explorer shows the project tree', async () => {
+  it('shows the explorer tree merged into the sidebar', async () => {
     await registerUser('tree', 'pw12', 'Tree');
     await signInThroughUi('tree', 'pw12');
-    expect(screen.getByText('Explorer')).toBeTruthy();
+    // Explorer tree and navigation live in the same sidebar.
     expect(screen.getByText('Programs')).toBeTruthy();
+    expect(screen.getByText('MainRoutine')).toBeTruthy();
+    expect(document.querySelector('.sidebar .explorer-tree')).toBeTruthy();
+    expect(document.querySelector('.sidebar .sidebar-nav')).toBeTruthy();
   });
 
   it('opens the PLCommando game board', async () => {

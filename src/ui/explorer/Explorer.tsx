@@ -199,13 +199,6 @@ export function Explorer() {
 
   return (
     <div className="explorer">
-      <div className="explorer-head">
-        <span className="explorer-title">Explorer</span>
-        <span className="explorer-project mono" title={project.name}>
-          {project.name}
-        </span>
-      </div>
-
       <div className="explorer-search">
         <Icon name="ledger" size={13} />
         <input

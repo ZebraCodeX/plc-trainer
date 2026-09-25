@@ -79,7 +79,6 @@ export function App() {
   const scanCount = useScanCount();
   const [newOpen, setNewOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const [explorerOpen, setExplorerOpen] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, ready, init, logout, accounts } = useAuth();
   const game = useGame();
@@ -144,9 +143,7 @@ export function App() {
 
   return (
     <div
-      className={`app ${navOpen ? 'nav-open' : ''} ${explorerOpen ? 'explorer-open' : ''} ${
-        inArena ? 'arena-mode' : ''
-      }`}
+      className={`app ${navOpen ? 'nav-open' : ''} ${inArena ? 'arena-mode' : ''}`}
     >
       <aside className="sidebar">
         <div className="sidebar-brand">
@@ -156,6 +153,12 @@ export function App() {
             <div className="sidebar-sub">Automation Simulator</div>
           </div>
         </div>
+
+        {!inArena && (
+          <div className="sidebar-explorer">
+            <Explorer />
+          </div>
+        )}
 
         <nav className="sidebar-nav">
           {NAV.map((group) => (
@@ -193,24 +196,11 @@ export function App() {
         </div>
       </aside>
 
-      {explorerOpen && !inArena && (
-        <aside className="explorer-pane">
-          <Explorer />
-        </aside>
-      )}
-
       <div className="main">
         {!inArena && (
           <header className="topbar">
           <button className="hamburger" onClick={() => setNavOpen((v) => !v)} title="Menu">
             <Icon name="chevron" />
-          </button>
-          <button
-            className={`tree-toggle ${explorerOpen ? 'active' : ''}`}
-            onClick={() => setExplorerOpen((v) => !v)}
-            title="Toggle explorer"
-          >
-            <Icon name="ledger" />
           </button>
           <div className="topbar-title">
             <div className="crumb">
@@ -341,9 +331,6 @@ export function App() {
       </div>
 
       {navOpen && <div className="nav-scrim" onClick={() => setNavOpen(false)} />}
-      {explorerOpen && !inArena && (
-        <div className="explorer-scrim" onClick={() => setExplorerOpen(false)} />
-      )}
 
       {ui.message && <div className="toast">{ui.message}</div>}
 
